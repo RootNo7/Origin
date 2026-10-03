@@ -1,3 +1,3 @@
 # Tests
 
-Repository-level tests for engine, AI, integration, and regression behavior.
+This directory contains the tests part of Origin.

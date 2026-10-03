@@ -1,48 +1,52 @@
-# Virtual Earth
+# Origin
 
-A persistent, deterministic 2D Earth-like world built in Godot. **This build deliberately contains no LLM or autonomous humans yet.** The goal is to establish the world itself as a stable simulation substrate.
+Origin is a persistent artificial-universe project.
 
-## What exists now
+This repository currently contains the first runnable universe foundation:
+VEarth, simulation time, deterministic world generation, simple physical
+motion, environmental cycles, a small chemistry boundary, entities, events,
+and inspectable save/load state.
 
-- Large 8192×8192 continuous world.
-- Deterministic procedural land/ocean/biome map from a fixed seed.
-- Day/night cycle and an accelerated virtual clock.
-- Calendar, seasons, weather and temperature simulation.
-- Persistent save file in `user://virtual_earth_save.json`.
-- Physics sandbox using `RigidBody2D` objects with collisions and momentum.
-- World boundaries and camera limits.
-- Procedurally generated trees, rocks and shrubs.
-- Observer camera, zoom and simulation controls.
-- No external art assets or Python dependencies.
-- Compatibility renderer for older PCs.
+The virtual world is intentionally independent from AI. AI/inhabitants will
+connect through explicit perception/action interfaces later.
 
-## Important design rule
+## Build
 
-The world does not teach a future agent through hidden shortcuts. Future AI agents will interact with the world through an explicit perception/action interface, while the simulation remains the authority for physical consequences.
+Requirements:
 
-## Controls
+- CMake 3.20+
+- C++20 compiler
 
-- **W A S D** — move observer camera
-- **Mouse wheel** — zoom
-- **Space** — pause/resume virtual time
-- **+ / K** — increase simulation speed
-- **- / J** — decrease simulation speed
-- **F** — spawn a physics object at the mouse location and give it an impulse
-- **R** — reset camera to the world center
+From the repository root:
 
-## Open in Godot
+```bash
+cmake -S . -B build
+cmake --build build --config Release
+```
 
-Use **Godot 4.7.2 stable** or another compatible Godot 4.7 build. The project uses only built-in Godot systems and GDScript.
+Run:
 
-1. Extract/open this folder in Godot.
-2. Import `project.godot`.
-3. Press **F6/F5** to run the project.
-4. Watch the virtual clock advance, move around the world, and test physics with **F**.
+```bash
+./build/origin
+```
 
-## Save location
+On a Visual Studio generator, the executable is usually under:
+`build/Release/origin.exe`.
 
-Godot stores the persistent runtime save under its normal per-user `user://` directory. The save contains the simulation clock/weather and dynamic physics-object states.
+Run tests:
 
-## Reality note
+```bash
+ctest --test-dir build --output-on-failure
+```
 
-This is an Earth-*like* simulation, not a geophysics-accurate replica of the real planet. The architecture is intended to let the world rules become progressively richer without changing the future AI interface.
+## Current runtime
+
+The executable generates VEarth from a fixed seed, advances the simulation
+with a fixed time step, applies gravity and terrain collision to a few physical
+objects, updates the day/night environment, prints a terminal view, and saves
+state to `storage/saves/vearth.origin`.
+
+This is a real foundation, not a claim that the complete scientific universe
+has already been implemented. Physics and chemistry are deliberately scoped
+to the models currently represented in code; future models must be explicit,
+tested, and documented rather than faked.

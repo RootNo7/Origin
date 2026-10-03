@@ -1,3 +1,30 @@
-.godot/
+# Build
+build/
+out/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CTestTestfile.cmake
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+.venv/
+
+# Runtime data
+*.log
 *.tmp
-*.bak
+
+# Local simulation saves
+storage/saves/*
+!storage/saves/.gitkeep
+
+# OS
+Thumbs.db
+.DS_Store
