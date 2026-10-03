@@ -1,0 +1,1377 @@
+# ============================================================
+# ORIGIN — NAMING & ENTITY REGISTRY
+# ============================================================
+#
+# Purpose:
+#   Single source of truth for the names, identities, roles,
+#   responsibilities, relationships, and metadata of the Origin
+#   project and everything that exists within its virtual reality.
+#
+# Rules:
+#   - Do not rename registered entities casually.
+#   - Do not reuse an existing ID for another concept.
+#   - Names describe identity; IDs provide stable references.
+#   - Technical names and human-facing names may differ.
+#   - New major entities must be registered here.
+#
+# ============================================================
+
+
+registry:
+  name: "Origin Registry"
+  file: "NAMING.yaml"
+  project: "Origin"
+  version: "1.0.0"
+  status: "active"
+
+  purpose: >
+    Maintain the canonical terminology and metadata for the Origin
+    artificial-universe project.
+
+  authority:
+    description: >
+      This file is the canonical naming registry. When documentation,
+      source code, comments, or AI-generated text use a different name
+      for a registered concept, the registered name takes precedence
+      unless an explicit rename is approved.
+
+  naming_principles:
+    - "Names should be simple."
+    - "Names should be memorable."
+    - "Names should have a clear meaning."
+    - "Avoid unnecessary sci-fi terminology."
+    - "Avoid meaningless abbreviations."
+    - "Avoid names that sound like temporary prototypes."
+    - "Technical identifiers should remain stable."
+    - "Human-facing names may be more natural than code identifiers."
+    - "Names should remain usable if the project becomes very large."
+
+
+# ============================================================
+# 1. PROJECT
+# ============================================================
+
+project:
+
+  id: "origin"
+  name: "Origin"
+  display_name: "Origin"
+  type: "project"
+
+  pronunciation: "OR-i-jin"
+
+  meaning: >
+    The beginning or source of something. The name represents the project's
+    goal of creating an artificial reality in which life, intelligence,
+    learning, society, and evolution may emerge.
+
+  role: >
+    Origin is the complete research and engineering project containing
+    the virtual universe, its simulation engine, inhabitants, scientific
+    systems, AI systems, tools, and observation infrastructure.
+
+  scope:
+    includes:
+      - "virtual universe"
+      - "virtual worlds"
+      - "simulation engine"
+      - "physics"
+      - "matter"
+      - "chemistry"
+      - "environment"
+      - "life"
+      - "artificial inhabitants"
+      - "memory"
+      - "learning"
+      - "concept formation"
+      - "communication"
+      - "reproduction"
+      - "evolution"
+      - "civilization"
+      - "observation"
+      - "research tooling"
+
+  does_not_mean:
+    - "the AI itself"
+    - "the virtual Earth itself"
+    - "the simulation engine itself"
+
+  aliases:
+    - "Project Origin"
+
+  status: "canonical"
+
+
+# ============================================================
+# 2. VIRTUAL UNIVERSE
+# ============================================================
+
+universe:
+
+  id: "v-universe"
+  name: "VUniverse"
+  display_name: "VUniverse"
+  type: "virtual_universe"
+
+  meaning: "Virtual Universe"
+
+  role: >
+    The complete computational universe simulated by Origin.
+
+  description: >
+    VUniverse is the highest-level simulated reality. It contains worlds,
+    space, time, matter, energy, physical laws, environments, life,
+    inhabitants, events, and all persistent state required for the
+    simulated reality to continue existing.
+
+  characteristics:
+    - "persistent"
+    - "time-dependent"
+    - "rule-governed"
+    - "stateful"
+    - "observable"
+    - "extensible"
+    - "potentially multi-world"
+
+  contains:
+    - "reality"
+    - "worlds"
+    - "time"
+    - "physics"
+    - "matter"
+    - "chemistry"
+    - "environment"
+    - "life"
+    - "inhabitants"
+    - "events"
+    - "history"
+    - "evolution"
+
+  parent:
+    id: "origin"
+
+  child_entities:
+    - "reality"
+    - "world"
+    - "time"
+    - "physics"
+    - "matter"
+    - "chemistry"
+    - "environment"
+    - "life"
+    - "inhabitant"
+    - "events"
+    - "history"
+    - "evolution"
+
+  status: "canonical"
+
+
+# ============================================================
+# 3. REALITY
+# ============================================================
+
+reality:
+
+  id: "reality"
+  name: "Reality"
+  display_name: "Reality"
+  type: "simulation_reality"
+
+  role: >
+    The actual simulated state of existence at any given point in
+    VUniverse.
+
+  description: >
+    Reality represents what currently exists and is happening inside
+    VUniverse. It is not the rendering or visualization of the world.
+    Rendering is only an external representation of Reality.
+
+  distinction:
+    reality:
+      description: "The actual simulated state."
+    rendering:
+      description: "A visual representation of that state."
+
+  contains:
+    - "physical state"
+    - "environmental state"
+    - "chemical state"
+    - "biological state"
+    - "entity state"
+    - "event state"
+
+  parent:
+    id: "v-universe"
+
+  status: "canonical"
+
+
+# ============================================================
+# 4. WORLD
+# ============================================================
+
+world:
+
+  id: "world"
+  name: "World"
+  display_name: "World"
+  type: "world_container"
+
+  role: >
+    A major spatial and environmental region inside VUniverse capable
+    of containing matter, environments, organisms, and inhabitants.
+
+  description: >
+    A World is a bounded or logically defined environment inside the
+    universe. Multiple Worlds may eventually exist inside VUniverse.
+
+  examples:
+    - "VEarth"
+    - "future planets"
+    - "future artificial worlds"
+
+  parent:
+    id: "v-universe"
+
+  status: "canonical"
+
+
+# ============================================================
+# 5. FIRST WORLD — VEARTH
+# ============================================================
+
+vearth:
+
+  id: "v-earth"
+  name: "VEarth"
+  display_name: "VEarth"
+  type: "virtual_world"
+
+  meaning: "Virtual Earth"
+
+  role: >
+    The first major world created inside Origin.
+
+  description: >
+    VEarth is an artificial Earth-like world intended to provide the
+    initial persistent environment in which the first artificial
+    inhabitants can live, learn, interact, reproduce, and evolve.
+
+  purpose:
+    - "first experimental world"
+    - "initial artificial-life environment"
+    - "initial AI environment"
+    - "initial long-term evolution environment"
+
+  intended_systems:
+    - "terrain"
+    - "water"
+    - "atmosphere"
+    - "weather"
+    - "climate"
+    - "day/night"
+    - "seasons"
+    - "matter"
+    - "chemistry"
+    - "life"
+    - "resources"
+
+  parent:
+    id: "world"
+
+  status: "canonical"
+  priority: "primary"
+
+
+# ============================================================
+# 6. TIME
+# ============================================================
+
+time:
+
+  id: "time"
+  name: "Time"
+  display_name: "Time"
+  type: "fundamental_system"
+
+  role: >
+    Controls and represents the progression of simulated time throughout
+    VUniverse.
+
+  description: >
+    Time is a fundamental property of the simulation. Every physical,
+    chemical, biological, environmental, and agent process occurs within
+    the temporal framework defined by Time.
+
+  responsibilities:
+    - "simulation clock"
+    - "simulation ticks"
+    - "time conversion"
+    - "simulation speed"
+    - "pause"
+    - "step"
+    - "fast-forward"
+    - "long-duration simulation"
+    - "generation timing"
+
+  concepts:
+    - "tick"
+    - "second"
+    - "minute"
+    - "hour"
+    - "day"
+    - "month"
+    - "year"
+    - "generation"
+
+  future_capabilities:
+    - "adaptive time resolution"
+    - "event-driven time"
+    - "accelerated inactive regions"
+
+  parent:
+    id: "v-universe"
+
+  status: "canonical"
+
+
+# ============================================================
+# 7. PHYSICS
+# ============================================================
+
+physics:
+
+  id: "physics"
+  name: "Physics"
+  display_name: "Physics"
+  type: "fundamental_system"
+
+  role: >
+    Defines and calculates the physical behavior of objects and matter
+    inside VUniverse.
+
+  responsibilities:
+    - "motion"
+    - "forces"
+    - "gravity"
+    - "collision"
+    - "momentum"
+    - "energy"
+    - "angular motion"
+    - "constraints"
+    - "material physical properties"
+
+  foundational_properties:
+    - "mass"
+    - "position"
+    - "velocity"
+    - "acceleration"
+    - "force"
+    - "momentum"
+    - "energy"
+    - "rotation"
+
+  future:
+    - "fluid dynamics"
+    - "thermodynamics"
+    - "electromagnetism"
+    - "advanced physical models"
+
+  parent:
+    id: "reality"
+
+  status: "canonical"
+
+
+# ============================================================
+# 8. MATTER
+# ============================================================
+
+matter:
+
+  id: "matter"
+  name: "Matter"
+  display_name: "Matter"
+  type: "fundamental_system"
+
+  role: >
+    Represents physical substance existing within VUniverse.
+
+  hierarchy:
+    - "element"
+    - "atom"
+    - "molecule"
+    - "material"
+    - "complex structure"
+
+  responsibilities:
+    - "matter identity"
+    - "mass"
+    - "composition"
+    - "physical properties"
+    - "state of matter"
+    - "interaction with physics"
+    - "interaction with chemistry"
+
+  states:
+    - "solid"
+    - "liquid"
+    - "gas"
+    - "plasma"
+
+  parent:
+    id: "reality"
+
+  status: "canonical"
+
+
+# ============================================================
+# 9. CHEMISTRY
+# ============================================================
+
+chemistry:
+
+  id: "chemistry"
+  name: "Chemistry"
+  display_name: "Chemistry"
+  type: "fundamental_system"
+
+  role: >
+    Governs molecular structures, chemical interactions, reactions,
+    and transformations of matter.
+
+  responsibilities:
+    - "atoms"
+    - "molecules"
+    - "chemical bonds"
+    - "reactions"
+    - "reaction conditions"
+    - "temperature effects"
+    - "pressure effects"
+    - "chemical energy"
+
+  relationship:
+    depends_on:
+      - "matter"
+      - "physics"
+      - "environment"
+
+  parent:
+    id: "reality"
+
+  status: "canonical"
+
+
+# ============================================================
+# 10. ENVIRONMENT
+# ============================================================
+
+environment:
+
+  id: "environment"
+  name: "Environment"
+  display_name: "Environment"
+  type: "environment_system"
+
+  role: >
+    Represents the surrounding conditions experienced by matter and life.
+
+  responsibilities:
+    - "terrain"
+    - "water"
+    - "air"
+    - "atmosphere"
+    - "temperature"
+    - "weather"
+    - "climate"
+    - "light"
+    - "day/night"
+    - "seasons"
+    - "resources"
+
+  feedback:
+    environment_affects:
+      - "physics"
+      - "chemistry"
+      - "life"
+      - "inhabitants"
+
+    affected_by:
+      - "physics"
+      - "chemistry"
+      - "life"
+      - "inhabitants"
+
+  parent:
+    id: "reality"
+
+  status: "canonical"
+
+
+# ============================================================
+# 11. LIFE
+# ============================================================
+
+life:
+
+  id: "life"
+  name: "Life"
+  display_name: "Life"
+  type: "biological_system"
+
+  role: >
+    Governs living organisms and biological processes inside VUniverse.
+
+  responsibilities:
+    - "growth"
+    - "energy usage"
+    - "damage"
+    - "healing"
+    - "aging"
+    - "death"
+    - "reproduction"
+    - "inheritance"
+    - "mutation"
+    - "adaptation"
+
+  parent:
+    id: "reality"
+
+  status: "canonical"
+
+
+# ============================================================
+# 12. INHABITANT
+# ============================================================
+
+inhabitant:
+
+  id: "inhabitant"
+  name: "Inhabitant"
+  display_name: "Inhabitant"
+  type: "living_entity"
+
+  role: >
+    A living intelligent or potentially intelligent individual existing
+    inside a World.
+
+  description: >
+    An Inhabitant is not merely an AI instance. It is an individual
+    entity with its own state, experience, memory, perception, actions,
+    relationships, history, and potentially biological lineage.
+
+  characteristics:
+    - "individual identity"
+    - "experience"
+    - "memory"
+    - "perception"
+    - "action"
+    - "learning"
+    - "development"
+    - "potential reproduction"
+    - "potential evolution"
+
+  parent:
+    id: "life"
+
+  status: "canonical"
+
+
+# ============================================================
+# 13. ERIS
+# ============================================================
+
+eris:
+
+  id: "inhabitant-eris"
+  name: "Eris"
+  display_name: "Eris"
+  type: "artificial_inhabitant"
+
+  role: >
+    The first artificial intelligent inhabitant introduced into Origin.
+
+  identity:
+    individuality: true
+    unique_identity: true
+    first_of_kind: true
+
+  description: >
+    Eris is the first artificial inhabitant placed into VEarth. Eris is
+    intended to experience the universe directly rather than receiving
+    an external description of it.
+
+  fundamental_principle: >
+    Eris should not automatically know what the universe is, how it works,
+    what objects mean, or how capabilities should be combined. Eris must
+    discover these things through experience, observation, interaction,
+    memory, experimentation, and learning.
+
+  capabilities:
+    initial:
+      - "perception"
+      - "movement"
+      - "interaction"
+      - "memory"
+      - "learning"
+      - "communication"
+      - "experimentation"
+
+    future:
+      - "tool use"
+      - "construction"
+      - "advanced planning"
+      - "concept formation"
+      - "self-improvement"
+      - "reproduction"
+
+  forbidden_initial_knowledge:
+    - "complete physics rules"
+    - "complete chemistry rules"
+    - "hidden world state"
+    - "simulation source code"
+    - "future events"
+    - "predefined civilization"
+    - "predefined scientific theories"
+
+  identity_scope:
+    is:
+      - "individual"
+      - "inhabitant"
+      - "agent"
+      - "potential organism"
+
+    is_not:
+      - "the universe"
+      - "the simulation engine"
+      - "the project itself"
+
+  parent:
+    id: "inhabitant"
+
+  world:
+    id: "v-earth"
+
+  status: "canonical"
+  priority: "primary"
+
+
+# ============================================================
+# 14. SENSE
+# ============================================================
+
+sense:
+
+  id: "sense"
+  name: "Sense"
+  display_name: "Sense"
+  type: "agent_system"
+
+  role: >
+    Provides an inhabitant with information that it can legitimately
+    perceive from the surrounding world.
+
+  responsibilities:
+    - "visual perception"
+    - "environmental perception"
+    - "object perception"
+    - "sound perception where implemented"
+    - "internal state perception"
+    - "sensor input"
+
+  critical_rule: >
+    Sense must not expose hidden simulation information that the
+    inhabitant could not legitimately observe.
+
+  parent:
+    id: "inhabitant"
+
+  status: "canonical"
+
+
+# ============================================================
+# 15. ACT
+# ============================================================
+
+act:
+
+  id: "act"
+  name: "Act"
+  display_name: "Act"
+  type: "agent_system"
+
+  role: >
+    Converts an inhabitant's decisions into valid interactions with
+    the simulated world.
+
+  responsibilities:
+    - "movement"
+    - "object interaction"
+    - "communication"
+    - "tool interaction"
+    - "environment interaction"
+
+  principle: >
+    Every action must obey the capabilities and physical rules of the
+    universe.
+
+  parent:
+    id: "inhabitant"
+
+  status: "canonical"
+
+
+# ============================================================
+# 16. MEMORY
+# ============================================================
+
+memory:
+
+  id: "memory"
+  name: "Memory"
+  display_name: "Memory"
+  type: "agent_system"
+
+  role: >
+    Stores and retrieves experiences and knowledge available to an
+    inhabitant.
+
+  types:
+    - "short_term"
+    - "episodic"
+    - "semantic"
+    - "procedural"
+    - "long_term"
+
+  principle: >
+    Memory should represent what the inhabitant has experienced,
+    observed, learned, or legitimately acquired.
+
+  parent:
+    id: "inhabitant"
+
+  status: "canonical"
+
+
+# ============================================================
+# 17. CONCEPTS
+# ============================================================
+
+concepts:
+
+  id: "concepts"
+  name: "Concepts"
+  display_name: "Concepts"
+  type: "agent_system"
+
+  role: >
+    Represents concepts formed, modified, related, or discarded by
+    an inhabitant during learning.
+
+  responsibilities:
+    - "concept formation"
+    - "concept modification"
+    - "concept relationships"
+    - "confidence"
+    - "abstraction"
+    - "concept retirement"
+
+  principle: >
+    Concepts should be capable of emerging from experience instead of
+    being entirely predefined by the developer.
+
+  parent:
+    id: "inhabitant"
+
+  status: "canonical"
+
+
+# ============================================================
+# 18. KNOWLEDGE
+# ============================================================
+
+knowledge:
+
+  id: "knowledge"
+  name: "Knowledge"
+  display_name: "Knowledge"
+  type: "agent_system"
+
+  role: >
+    Represents information and beliefs an inhabitant has accumulated
+    through experience, observation, communication, and experimentation.
+
+  distinction:
+    memory: "record of experience"
+    knowledge: "information derived from experience"
+
+  parent:
+    id: "inhabitant"
+
+  status: "canonical"
+
+
+# ============================================================
+# 19. TALK
+# ============================================================
+
+talk:
+
+  id: "talk"
+  name: "Talk"
+  display_name: "Talk"
+  type: "communication_system"
+
+  role: >
+    Enables communication between inhabitants.
+
+  future:
+    - "language development"
+    - "language learning"
+    - "knowledge transmission"
+    - "social communication"
+
+  principle: >
+    Communication should eventually allow language and communication
+    systems to develop naturally rather than assuming a fully developed
+    language from the beginning.
+
+  parent:
+    id: "inhabitant"
+
+  status: "canonical"
+
+
+# ============================================================
+# 20. EXPERIMENT
+# ============================================================
+
+experiment:
+
+  id: "experiment"
+  name: "Experiment"
+  display_name: "Experiment"
+  type: "agent_learning_system"
+
+  role: >
+    Enables inhabitants to deliberately investigate unknown properties
+    of their environment.
+
+  process:
+    - "observation"
+    - "uncertainty"
+    - "hypothesis"
+    - "experiment design"
+    - "action"
+    - "measurement"
+    - "comparison"
+    - "learning"
+
+  principle: >
+    The inhabitant should discover unknown properties through interaction
+    instead of receiving hidden answers from the simulation.
+
+  parent:
+    id: "inhabitant"
+
+  status: "canonical"
+
+
+# ============================================================
+# 21. EVOLUTION
+# ============================================================
+
+evolution:
+
+  id: "evolution"
+  name: "Evolution"
+  display_name: "Evolution"
+  type: "population_system"
+
+  role: >
+    Governs changes in populations across generations through inheritance,
+    variation, mutation, environmental pressure, and selection.
+
+  responsibilities:
+    - "generation tracking"
+    - "inheritance"
+    - "mutation"
+    - "variation"
+    - "recombination"
+    - "selection"
+    - "adaptation"
+    - "ancestry"
+
+  principle: >
+    Evolution should emerge from population dynamics and environmental
+    conditions rather than being manually scripted.
+
+  parent:
+    id: "life"
+
+  status: "canonical"
+
+
+# ============================================================
+# 22. SOCIETY
+# ============================================================
+
+society:
+
+  id: "society"
+  name: "Society"
+  display_name: "Society"
+  type: "emergent_system"
+
+  role: >
+    Represents groups, relationships, cooperation, communication,
+    culture, and collective structures that may emerge among inhabitants.
+
+  possible_properties:
+    - "groups"
+    - "relationships"
+    - "communication"
+    - "shared knowledge"
+    - "culture"
+    - "cooperation"
+    - "competition"
+    - "social structures"
+
+  principle: >
+    Society must not assume a predefined civilization progression.
+    It should emerge from interactions between inhabitants and their
+    environment.
+
+  parent:
+    id: "life"
+
+  status: "future_canonical"
+
+
+# ============================================================
+# 23. EVENTS
+# ============================================================
+
+events:
+
+  id: "events"
+  name: "Events"
+  display_name: "Events"
+  type: "simulation_system"
+
+  role: >
+    Represents significant state changes occurring within VUniverse.
+
+  examples:
+    - "collision"
+    - "chemical reaction"
+    - "birth"
+    - "death"
+    - "mutation"
+    - "environmental change"
+    - "agent action"
+    - "discovery"
+    - "experiment"
+
+  metadata:
+    required:
+      - "timestamp"
+      - "event_type"
+      - "source"
+      - "payload"
+
+  parent:
+    id: "reality"
+
+  status: "canonical"
+
+
+# ============================================================
+# 24. HISTORY
+# ============================================================
+
+history:
+
+  id: "history"
+  name: "History"
+  display_name: "History"
+  type: "persistent_record"
+
+  role: >
+    Stores significant historical information about the universe,
+    worlds, inhabitants, events, experiments, and evolutionary lineages.
+
+  categories:
+    - "world history"
+    - "individual history"
+    - "event history"
+    - "experiment history"
+    - "ancestry"
+    - "evolution history"
+
+  parent:
+    id: "v-universe"
+
+  status: "canonical"
+
+
+# ============================================================
+# 25. OBSERVER
+# ============================================================
+
+observer:
+
+  id: "observer"
+  name: "Observer"
+  display_name: "Observer"
+  type: "external_system"
+
+  role: >
+    Provides humans and development tools with a controlled view into
+    VUniverse without becoming part of the simulated reality.
+
+  responsibilities:
+    - "visualization"
+    - "debugging"
+    - "inspection"
+    - "metrics"
+    - "simulation controls"
+    - "scientific analysis"
+    - "replay"
+
+  critical_rule: >
+    Observer is external to VUniverse. Its ability to inspect hidden
+    state must never automatically be granted to inhabitants.
+
+  parent:
+    id: "origin"
+
+  status: "canonical"
+
+
+# ============================================================
+# 26. CORE
+# ============================================================
+
+core:
+
+  id: "core"
+  name: "Core"
+  display_name: "Core"
+  type: "engine_system"
+
+  role: >
+    The foundational runtime responsible for coordinating the major
+    simulation systems.
+
+  responsibilities:
+    - "simulation lifecycle"
+    - "system scheduling"
+    - "state coordination"
+    - "time coordination"
+    - "event coordination"
+    - "shutdown"
+    - "startup"
+
+  critical_rule: >
+    Core coordinates systems but should not absorb their responsibilities.
+
+  parent:
+    id: "origin"
+
+  status: "canonical"
+
+
+# ============================================================
+# 27. ENTITY RELATIONSHIPS
+# ============================================================
+
+relationships:
+
+  containment:
+    - parent: "origin"
+      child: "v-universe"
+
+    - parent: "v-universe"
+      child: "world"
+
+    - parent: "world"
+      child: "inhabitant"
+
+  simulation:
+    - source: "time"
+      affects: "physics"
+
+    - source: "time"
+      affects: "chemistry"
+
+    - source: "time"
+      affects: "environment"
+
+    - source: "time"
+      affects: "life"
+
+    - source: "physics"
+      affects: "matter"
+
+    - source: "matter"
+      affects: "chemistry"
+
+    - source: "chemistry"
+      affects: "environment"
+
+    - source: "environment"
+      affects: "life"
+
+    - source: "life"
+      affects: "inhabitant"
+
+  agent:
+    - source: "sense"
+      feeds: "inhabitant"
+
+    - source: "inhabitant"
+      uses: "memory"
+
+    - source: "inhabitant"
+      uses: "concepts"
+
+    - source: "inhabitant"
+      uses: "knowledge"
+
+    - source: "inhabitant"
+      uses: "experiment"
+
+    - source: "inhabitant"
+      uses: "act"
+
+    - source: "inhabitant"
+      uses: "talk"
+
+  evolution:
+    - source: "inhabitant"
+      participates_in: "evolution"
+
+    - source: "environment"
+      creates_pressure_on: "evolution"
+
+    - source: "evolution"
+      affects: "future_inhabitants"
+
+
+# ============================================================
+# 28. NAMING CONVENTIONS
+# ============================================================
+
+naming_conventions:
+
+  project:
+    style: "Title Case / proper name"
+
+  systems:
+    style: "simple natural English"
+    examples:
+      - "Physics"
+      - "Chemistry"
+      - "Memory"
+      - "Evolution"
+
+  virtual_entities:
+    prefix: "V"
+    examples:
+      - "VUniverse"
+      - "VEarth"
+
+  individuals:
+    style: "unique personal names"
+    examples:
+      - "Eris"
+
+  code_identifiers:
+    style: "lower_snake_case or project-standard C++ convention"
+
+  ids:
+    style: "stable lowercase kebab-case"
+
+  rules:
+    - "Never use display names as database identifiers."
+    - "IDs must remain stable after renaming."
+    - "Do not reuse retired IDs."
+    - "Do not create aliases unless necessary."
+
+
+# ============================================================
+# 29. RESERVED NAMES
+# ============================================================
+
+reserved_names:
+
+  project:
+    - "Origin"
+
+  universe:
+    - "VUniverse"
+
+  first_world:
+    - "VEarth"
+
+  first_inhabitant:
+    - "Eris"
+
+  systems:
+    - "Reality"
+    - "Core"
+    - "Time"
+    - "Physics"
+    - "Matter"
+    - "Chemistry"
+    - "Environment"
+    - "Life"
+    - "Sense"
+    - "Act"
+    - "Memory"
+    - "Concepts"
+    - "Knowledge"
+    - "Talk"
+    - "Experiment"
+    - "Evolution"
+    - "Society"
+    - "Events"
+    - "History"
+    - "Observer"
+
+
+# ============================================================
+# 30. FUTURE NAMING RULE
+# ============================================================
+
+future_entities:
+
+  rule: >
+    Any major new concept introduced into Origin must receive a stable
+    registry entry before becoming a permanent architectural concept.
+
+  required_metadata:
+    - "id"
+    - "name"
+    - "display_name"
+    - "type"
+    - "role"
+    - "description"
+    - "parent"
+    - "status"
+
+  additional_metadata_when_applicable:
+    - "responsibilities"
+    - "relationships"
+    - "dependencies"
+    - "capabilities"
+    - "limitations"
+    - "lifecycle"
+    - "history"
+    - "aliases"
+
+
+# ============================================================
+# 31. CURRENT CANONICAL MAP
+# ============================================================
+
+canonical_map:
+
+  Origin:
+    type: "project"
+
+  VUniverse:
+    type: "universe"
+    parent: "Origin"
+
+  Reality:
+    type: "reality"
+    parent: "VUniverse"
+
+  VEarth:
+    type: "world"
+    parent: "VUniverse"
+
+  Eris:
+    type: "inhabitant"
+    parent: "VEarth"
+
+  Core:
+    type: "engine"
+    parent: "Origin"
+
+  Time:
+    type: "system"
+    parent: "VUniverse"
+
+  Physics:
+    type: "system"
+    parent: "Reality"
+
+  Matter:
+    type: "system"
+    parent: "Reality"
+
+  Chemistry:
+    type: "system"
+    parent: "Reality"
+
+  Environment:
+    type: "system"
+    parent: "Reality"
+
+  Life:
+    type: "system"
+    parent: "Reality"
+
+  Sense:
+    type: "agent_system"
+    parent: "Eris"
+
+  Act:
+    type: "agent_system"
+    parent: "Eris"
+
+  Memory:
+    type: "agent_system"
+    parent: "Eris"
+
+  Concepts:
+    type: "agent_system"
+    parent: "Eris"
+
+  Knowledge:
+    type: "agent_system"
+    parent: "Eris"
+
+  Talk:
+    type: "agent_system"
+    parent: "Eris"
+
+  Experiment:
+    type: "agent_system"
+    parent: "Eris"
+
+  Evolution:
+    type: "population_system"
+    parent: "Life"
+
+  Society:
+    type: "emergent_system"
+    parent: "Life"
+
+  Events:
+    type: "simulation_system"
+    parent: "Reality"
+
+  History:
+    type: "persistent_record"
+    parent: "VUniverse"
+
+  Observer:
+    type: "external_system"
+    parent: "Origin"
+
+  
