@@ -1,18 +1,22 @@
 project:
   name: Origin
-  codename: VUniverse
-  purpose: "Create a persistent computational reality in which physical, chemical, biological, and intelligent processes can occur."
-
-principles:
-  - "The universe exists independently of its inhabitants."
-  - "Inhabitants experience the universe through legitimate observations."
-  - "Capabilities may be provided without preloading their meaning."
-  - "Emergent behavior must come from mechanisms and experience, not hidden scripts."
-  - "Scientific simplifications must be explicit."
-  - "The simulation and its observer must remain separate."
-
-implementation:
-  language: "C++20+ for the universe engine"
-  initial_world: "VEarth"
-  first_inhabitant: "Eris"
-  ai_layer: "Python later, connected through explicit interfaces"
+  version: 0.1.0
+  universe: VUniverse
+  first_world: VEarth
+  first_inhabitant: Eris
+purpose: "A persistent artificial reality where physical, chemical, biological and intelligent processes can emerge from explicit rules."
+current_version_scope:
+  - CPU-friendly 2D world
+  - deterministic terrain
+  - simulation time
+  - sunlight and temperature
+  - basic gravity and terrain collision
+  - observer interface
+future:
+  - chemistry
+  - life
+  - Eris perception/action
+  - learning
+  - reproduction
+  - evolution
+  - persistence

@@ -1,0 +1,3 @@
+#include "observer/bridge/state_bridge.hpp"
+#include <fstream>
+namespace origin{bool StateBridge::write(const Simulation&s,const std::filesystem::path&p){std::ofstream o(p);if(!o)return false;o<<"time "<<s.clock().seconds()<<"\ntick "<<s.clock().tick()<<"\nwidth "<<s.world().width()<<"\nheight "<<s.world().height()<<"\ntemperature "<<s.environment().global_temperature_k()<<"\nsunlight "<<s.environment().sunlight()<<"\nground";for(auto&c:s.world().columns())o<<' '<<c.ground_height_m;o<<"\nentities "<<s.entities().size()<<"\n";for(auto&e:s.entities().all())o<<e.id<<' '<<e.body.position.x<<' '<<e.body.position.y<<'\n';return o.good();}}

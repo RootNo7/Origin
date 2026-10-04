@@ -1,27 +1,4 @@
 #pragma once
-
-#include "engine/core/types.hpp"
-
+#include <cstdint>
 #include <string>
-
-namespace origin {
-
-enum class EventType {
-    SimulationStarted,
-    SimulationStepped,
-    Collision,
-    EnvironmentChanged,
-    ChemicalStateChanged,
-    SaveCompleted,
-    LoadCompleted
-};
-
-struct Event {
-    std::uint64_t tick{};
-    double simulation_seconds{};
-    EventType type{};
-    EntityId source{};
-    std::string message;
-};
-
-}
+namespace origin{enum class EventType{SimulationStarted,SimulationStepped};struct Event{std::uint64_t tick;double seconds;EventType type;std::string message;};}

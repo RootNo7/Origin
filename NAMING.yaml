@@ -1,32 +1,5 @@
-registry:
-  name: "Origin Registry"
-  version: "1.0.0"
-  project: "Origin"
-entities:
-  origin:
-    name: "Origin"
-    type: "project"
-    role: "Complete artificial-universe project."
-  v_universe:
-    name: "VUniverse"
-    type: "virtual_universe"
-    role: "Complete simulated universe."
-  v_earth:
-    name: "VEarth"
-    type: "virtual_world"
-    role: "First world inside VUniverse."
-  eris:
-    name: "Eris"
-    type: "artificial_inhabitant"
-    role: "First intelligent inhabitant; not implemented yet."
-systems:
-  core: {name: "Core", role: "Runtime coordination."}
-  time: {name: "Time", role: "Simulation time."}
-  physics: {name: "Physics", role: "Physical behavior."}
-  matter: {name: "Matter", role: "Physical substance."}
-  chemistry: {name: "Chemistry", role: "Chemical state and reactions."}
-  environment: {name: "Environment", role: "Environmental conditions."}
-  life: {name: "Life", role: "Living systems."}
-  events: {name: "Events", role: "State-change events."}
-  history: {name: "History", role: "Persistent historical record."}
-  observer: {name: "Observer", role: "External human-facing view."}
+Origin: {role: project}
+VUniverse: {role: complete simulated reality}
+VEarth: {role: first simulated world}
+Eris: {role: first artificial inhabitant}
+Observer: {role: visualization and inspection layer}
