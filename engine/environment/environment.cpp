@@ -1,4 +1,19 @@
 #include "engine/environment/environment.hpp"
-#include <cmath>
 #include <algorithm>
-namespace origin{void Environment::step(World&w,double t,double dt){double p=std::fmod(t,86400.)/86400.;sun_=std::max(0.,std::sin(p*6.283185-1.570796));temp_=286+3*sun_;for(std::size_t x=0;x<w.width();++x){auto&c=w.columns()[x];double target=temp_+4*std::sin(x*.04);c.temperature_k+=(target-c.temperature_k)*std::clamp(dt/120.,0.,1.);}}}
+#include <cmath>
+
+namespace origin {
+void Environment::step(World& world, double time_seconds, double dt) {
+    const double day_fraction = std::fmod(time_seconds, 86400.0) / 86400.0;
+    sun_ = std::max(0.0, std::sin(day_fraction * 6.283185307179586 - 1.570796326794897));
+    temp_ = 286.0 + 3.0 * sun_;
+
+    for (std::size_t z = 0; z < world.depth(); ++z) {
+        for (std::size_t x = 0; x < world.width(); ++x) {
+            auto& cell = world.cell(x, z);
+            const double target = temp_ + 4.0 * std::sin(x * 0.04) + 1.0 * std::cos(z * 0.025);
+            cell.temperature_k += (target - cell.temperature_k) * std::clamp(dt / 120.0, 0.0, 1.0);
+        }
+    }
+}
+}

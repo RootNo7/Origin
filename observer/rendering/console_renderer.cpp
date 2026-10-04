@@ -1,2 +1,30 @@
 #include "observer/rendering/console_renderer.hpp"
-namespace origin{void ConsoleRenderer::render(const Simulation&s,std::ostream&o){auto&w=s.world();o<<"\nOrigin / VEarth  time="<<s.clock().seconds()<<" tick="<<s.clock().tick()<<"\n";for(int y=(int)w.height()-1;y>=0;--y){for(std::size_t x=0;x<w.width();++x){char c=y<w.columns()[x].ground_height_m?(w.columns()[x].ground_height_m<=w.sea_level_m()?'~':'#'):' ';for(auto&e:s.entities().all())if((int)e.body.position.x==(int)x&&(int)e.body.position.y==y)c='O';o<<c;}o<<'\n';}}}
+#include <algorithm>
+#include <cmath>
+
+namespace origin {
+void ConsoleRenderer::render(const Simulation& simulation, std::ostream& out) {
+    const auto& world = simulation.world();
+    const std::size_t step_x = std::max<std::size_t>(1, world.width() / 80);
+    const std::size_t step_z = std::max<std::size_t>(1, world.depth() / 28);
+
+    out << "\nOrigin / VEarth  time=" << simulation.clock().seconds()
+        << " tick=" << simulation.clock().tick() << "\n";
+
+    for (std::size_t z = 0; z < world.depth(); z += step_z) {
+        for (std::size_t x = 0; x < world.width(); x += step_x) {
+            const auto& cell = world.cell(x, z);
+            char marker = cell.ground_height_m < world.sea_level_m() ? '~' : (cell.ground_height_m > 13.0 ? '^' : '.');
+            for (const auto& entity : simulation.entities().all()) {
+                if (static_cast<std::size_t>(std::round(entity.body.position.x)) == x &&
+                    static_cast<std::size_t>(std::round(entity.body.position.z)) == z) {
+                    marker = 'O';
+                    break;
+                }
+            }
+            out << marker;
+        }
+        out << '\n';
+    }
+}
+}

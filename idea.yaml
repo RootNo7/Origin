@@ -1,22 +1,5 @@
-project:
-  name: Origin
-  version: 0.1.0
-  universe: VUniverse
-  first_world: VEarth
-  first_inhabitant: Eris
-purpose: "A persistent artificial reality where physical, chemical, biological and intelligent processes can emerge from explicit rules."
-current_version_scope:
-  - CPU-friendly 2D world
-  - deterministic terrain
-  - simulation time
-  - sunlight and temperature
-  - basic gravity and terrain collision
-  - observer interface
-future:
-  - chemistry
-  - life
-  - Eris perception/action
-  - learning
-  - reproduction
-  - evolution
-  - persistence
+project: {name: Origin, version: 0.2.0-dev, universe: VUniverse, first_world: VEarth, first_inhabitant: Eris}
+vision: "A persistent computational universe where physical, chemical, biological and intelligent processes can emerge from explicit rules."
+principles: ["universe independent of inhabitants", "agents learn through perception and action", "no omniscient hidden knowledge", "later multiple agents, reproduction and evolution", "observer separate from simulation truth", "3D simulation authority independent of rendering"]
+constraints: {godot: "3.x", performance: "CPU-first", gpu: "No CUDA/NVIDIA requirement", style: "professional, minimal, understandable, not over-engineered", world_representation: "deterministic 3D heightfield foundation"}
+languages: {simulation: C++20, observer: "Godot 3 GDScript", future_ai_ml: Python}

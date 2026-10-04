@@ -1,3 +1,6 @@
-.godot/
-.import/
+build/
+.vscode/
+.idea/
 *.log
+storage/saves/*.origin
+observer/bridge/state.txt

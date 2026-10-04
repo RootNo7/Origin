@@ -1,5 +1,5 @@
-Origin: {role: project}
-VUniverse: {role: complete simulated reality}
-VEarth: {role: first simulated world}
-Eris: {role: first artificial inhabitant}
-Observer: {role: visualization and inspection layer}
+Origin: {role: "project and universe platform"}
+VUniverse: {role: "complete simulated universe"}
+VEarth: {role: "first simulated world"}
+Eris: {role: "first intelligent inhabitant"}
+Observer: {role: "human-facing visualization"}
