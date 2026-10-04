@@ -31,3 +31,18 @@ Future agent path:
 agent request → validated action interface → simulation → authoritative result → perception/feedback.
 
 Godot developer/testing controls remain separate from agent capabilities.
+
+
+## 0.3.0 boundaries
+
+The current vertical slice is split into four authoritative boundaries:
+
+**World** — terrain, environmental cells, resources and persistent world revisions.
+
+**Entities** — physical bodies and inventory state.
+
+**Action interface** — a deliberately narrow validated action surface. The simulation decides whether an action succeeds.
+
+**Observer** — state/terrain snapshots and Godot visualization. The observer never becomes the source of truth.
+
+Terrain geometry has its own revision counter, separate from the broader world revision, so resource changes do not force a terrain cache rebuild.

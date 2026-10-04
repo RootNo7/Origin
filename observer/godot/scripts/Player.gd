@@ -27,13 +27,13 @@ func _physics_process(delta):
     var input_vec = Vector2(
         float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
         float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W))
-    )
-    input_vec = input_vec.clamped(1.0)
+    ).clamped(1.0)
 
     var basis = global_transform.basis
     var direction = (basis.x * input_vec.x) + (basis.z * input_vec.y)
     direction.y = 0.0
-    direction = direction.normalized()
+    if direction.length_squared() > 0.0:
+        direction = direction.normalized()
 
     velocity.x = direction.x * move_speed
     velocity.z = direction.z * move_speed

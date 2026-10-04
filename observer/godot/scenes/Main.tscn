@@ -3,4 +3,4 @@
 [ext_resource path="res://observer/godot/scripts/Main.gd" type="Script" id=1]
 
 [node name="Origin" type="Spatial"]
-script = ExtResource(1)
+script = ExtResource( 1 )

@@ -1,30 +1,31 @@
 #pragma once
 #include "engine/core/types.hpp"
-#include <cstdint>
+#include "engine/world/world.hpp"
+#include <string>
 
 namespace origin {
-
-enum class AgentActionType : std::uint8_t {
-    Observe = 0,
-    Move,
-    Interact,
-    UseItem,
-    Craft,
-    Communicate
-};
+enum class AgentActionType { GatherResource };
 
 struct AgentAction {
-    AgentActionType type = AgentActionType::Observe;
-    Vec3 direction{};
-    EntityId target = 0;
+    AgentActionType type = AgentActionType::GatherResource;
+    EntityId actor_id = 0;
+    EntityId target_id = 0;
+    double amount = 1.0;
 };
 
 struct AgentActionResult {
     bool accepted = false;
-    bool changed_world = false;
-    std::uint64_t tick = 0;
+    double amount = 0.0;
+    std::string reason;
 };
 
-// The action contract is intentionally small. The world remains authoritative;
-// this file defines a future integration seam, not developer privileges.
+inline const char* resource_kind_name(ResourceKind kind) {
+    switch (kind) {
+        case ResourceKind::Stone: return "stone";
+        case ResourceKind::Wood: return "wood";
+        case ResourceKind::Water: return "water";
+        case ResourceKind::Soil: return "soil";
+    }
+    return "unknown";
+}
 }

@@ -1,9 +1,53 @@
 #include "engine/simulation/simulation.hpp"
 #include "observer/rendering/console_renderer.hpp"
 #include "observer/bridge/state_bridge.hpp"
+#include "observer/bridge/action_bridge.hpp"
 #include "storage/serialization/world_serializer.hpp"
-#include <filesystem>
-#include <iostream>
-#include <thread>
 #include <chrono>
-int main(int argc,char**argv){using namespace origin;Simulation s(96,96);s.initialize(7);std::filesystem::create_directories("observer/bridge");std::filesystem::create_directories("storage/saves");if(argc>1&&std::string(argv[1])=="--bridge"){std::cout<<"Origin bridge running.\n";for(;;){s.step();if(!StateBridge::write(s,"observer/bridge/state.txt"))return 1;if(s.clock().tick()%300==0)WorldSerializer::save(s,"storage/saves/vearth.origin");std::this_thread::sleep_for(std::chrono::milliseconds(33));}}for(int i=0;i<120;++i)s.step();ConsoleRenderer::render(s,std::cout);return WorldSerializer::save(s,"storage/saves/vearth.origin")?0:1;}
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <thread>
+
+int main(int argc, char** argv) {
+    using namespace origin;
+    Simulation simulation(96, 96);
+    std::filesystem::create_directories("observer/bridge");
+    std::filesystem::create_directories("storage/saves");
+
+    bool bridge_mode = false;
+    bool resume = false;
+    std::filesystem::path load_path;
+    for (int i = 1; i < argc; ++i) {
+        const std::string arg = argv[i];
+        if (arg == "--bridge") bridge_mode = true;
+        else if (arg == "--resume") resume = true;
+        else if (arg == "--load" && i + 1 < argc) load_path = argv[++i];
+    }
+
+    bool loaded = false;
+    if (!load_path.empty()) loaded = WorldSerializer::load(simulation, load_path);
+    else if (resume && std::filesystem::exists("storage/saves/vearth.origin"))
+        loaded = WorldSerializer::load(simulation, "storage/saves/vearth.origin");
+
+    if (!loaded) simulation.initialize(7);
+
+    if (bridge_mode) {
+        std::cout << (loaded ? "Origin bridge resumed from save.\n" : "Origin bridge started new world.\n");
+        const auto command_path = std::filesystem::path("observer/bridge/commands.txt");
+        const auto result_path = std::filesystem::path("observer/bridge/results.txt");
+        if (!std::filesystem::exists(command_path)) std::ofstream(command_path).close();
+        for (;;) {
+            ActionBridge::process(simulation, command_path, result_path);
+            simulation.step();
+            if (!StateBridge::write(simulation, "observer/bridge/state.txt")) return 1;
+            if (simulation.clock().tick() % 300 == 0 && !WorldSerializer::save(simulation, "storage/saves/vearth.origin")) return 1;
+            std::this_thread::sleep_for(std::chrono::milliseconds(33));
+        }
+    }
+
+    for (int i = 0; i < 120; ++i) simulation.step();
+    ConsoleRenderer::render(simulation, std::cout);
+    return WorldSerializer::save(simulation, "storage/saves/vearth.origin") ? 0 : 1;
+}
