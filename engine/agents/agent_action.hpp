@@ -5,6 +5,7 @@
 
 namespace origin {
 enum class AgentActionType { GatherResource };
+enum class ActionSource { Agent, DeveloperTest };
 
 struct AgentAction {
     AgentActionType type = AgentActionType::GatherResource;

@@ -6,14 +6,16 @@
 namespace origin {
 namespace { constexpr double kPi = 3.14159265358979323846; }
 
-World::World(std::size_t width, std::size_t depth) : width_(width), depth_(depth), cells_(width * depth) {
-    if (width < 2 || depth < 2) throw std::invalid_argument("Origin World requires width/depth >= 2");
+World::World(std::size_t width, std::size_t depth) : width_(width), depth_(depth) {
+    if (width < 2 || depth < 2 || width > kMaxDimension || depth > kMaxDimension)
+        throw std::invalid_argument("Origin World dimensions are outside supported bounds");
+    cells_.resize(width * depth);
 }
 
 void World::generate_vearth(std::uint32_t seed) {
     seed_ = seed;
-    ++revision_;
-    ++terrain_revision_;
+    if (revision_ != std::numeric_limits<std::uint64_t>::max()) ++revision_;
+    if (terrain_revision_ != std::numeric_limits<std::uint64_t>::max()) ++terrain_revision_;
     std::mt19937 random(seed);
     std::uniform_real_distribution<double> noise(-1.0, 1.0);
 
@@ -82,12 +84,16 @@ bool World::gather_resource(EntityId id, double amount, double& gathered) {
     gathered = std::min(amount, resource->remaining);
     resource->remaining -= gathered;
     if (resource->remaining < 1e-9) resource->remaining = 0.0;
-    ++revision_;
+    if (revision_ != std::numeric_limits<std::uint64_t>::max()) ++revision_;
     return gathered > 0.0;
 }
 
 double World::ground_height(double x, double z) const {
     if (cells_.empty()) return 0.0;
+    if (!std::isfinite(x) || !std::isfinite(z)) {
+        x = static_cast<double>(width_ - 1) * 0.5;
+        z = static_cast<double>(depth_ - 1) * 0.5;
+    }
     const double max_x = static_cast<double>(width_ - 1);
     const double max_z = static_cast<double>(depth_ - 1);
     const double qx = std::clamp(x, 0.0, max_x);

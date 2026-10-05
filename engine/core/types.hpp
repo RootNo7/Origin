@@ -18,19 +18,9 @@ struct Vec3 {
     }
 };
 
-inline Vec3 operator+(Vec3 a, const Vec3& b) {
-    a += b;
-    return a;
-}
-
-inline Vec3 operator*(Vec3 a, double scale) {
-    a.x *= scale;
-    a.y *= scale;
-    a.z *= scale;
-    return a;
-}
-
-inline bool nearly_equal(double a, double b, double epsilon = 1e-9) {
-    return std::abs(a - b) <= epsilon;
-}
+inline Vec3 operator+(Vec3 a, const Vec3& b) { a += b; return a; }
+inline Vec3 operator*(Vec3 a, double scale) { a.x *= scale; a.y *= scale; a.z *= scale; return a; }
+inline double length_squared(const Vec3& v) { return v.x*v.x + v.y*v.y + v.z*v.z; }
+inline bool is_finite(const Vec3& v) { return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z); }
+inline bool nearly_equal(double a, double b, double epsilon = 1e-9) { return std::abs(a - b) <= epsilon; }
 }

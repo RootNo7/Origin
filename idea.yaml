@@ -1,4 +1,4 @@
-project: {name: Origin, version: 0.3.0-dev, universe: VUniverse, first_world: VEarth, first_inhabitant: Eris}
+project: {name: Origin, version: 0.4.0-dev, universe: VUniverse, first_world: VEarth, first_inhabitant: Eris}
 vision: "A persistent computational universe where physical, chemical, biological and intelligent processes can emerge from explicit rules."
 principles: ["universe independent of inhabitants", "agents learn through perception and action", "no omniscient hidden knowledge", "later multiple agents, reproduction and evolution", "observer separate from simulation truth", "3D simulation authority independent of rendering"]
 constraints: {godot: "3.x", performance: "CPU-first", gpu: "No CUDA/NVIDIA requirement", style: "professional, minimal, understandable, not over-engineered", world_representation: "deterministic 3D heightfield with persistent resource deposits"}

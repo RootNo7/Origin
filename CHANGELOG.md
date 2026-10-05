@@ -1,13 +1,20 @@
 # Changelog
 
-## 0.3.0-dev — Interaction + Persistence Foundation
+## 0.4.0-dev — Reliability + Human Interaction
 
-- Added deterministic world resource deposits and per-entity inventory primitives.
-- Added authoritative, range-validated gather actions.
-- Added external action bridge for controlled experiments.
-- Upgraded state bridge to version 3 with cached terrain snapshots.
-- Upgraded save format to version 3 with transactional save/load and inventory persistence.
-- Added Origin calendar fields from seconds through years.
-- Hardened physics with bounded substeps and finite-state recovery.
-- Improved Godot 3.6 terrain normals and resource visualization.
-- Added release validation script and expanded automated tests.
+- Added a developer/test action channel separate from the future agent channel.
+- Added authoritative HumanTester actor with pose/respawn controls.
+- Added Godot-driven authoritative resource gathering.
+- Prevented normal agent actions from impersonating the developer-only HumanTester.
+- Hardened bridge command claiming to avoid truncating files while writers publish commands.
+- Reworked agent command parsing so malformed and unsupported commands receive explicit rejection results.
+- Added command file and line-size limits.
+- Hardened save/load validation against non-finite values, duplicate terrain cells, duplicate IDs, invalid inventory stacks and invalid resource state.
+- Upgraded save format to version 4 with HumanTester identity; version 3 migration is supported.
+- Hardened save/bridge publication on Windows with backup/rollback handling.
+- Clamped simulation timestep and speed and hardened calendar conversion at extreme values.
+- Hardened physics against invalid body parameters and huge substep counts.
+- World revision now reflects environment state updates as well as resource mutations.
+- Godot HUD now displays simulation environment data and human-test inventory.
+- Godot resource targeting/gathering no longer triggers when the initial click is only recapturing the mouse.
+- Added regression tests for malformed commands, developer/agent isolation, corrupted saves, duplicate cells, extreme numeric values, live bridge behavior and finite physics recovery.

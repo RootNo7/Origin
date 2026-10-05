@@ -2,37 +2,38 @@
 
 Origin is a virtual-universe research project, not simply a game. VUniverse is the simulated reality; VEarth is its first world; Eris is intended to become its first intelligent inhabitant later.
 
-## 0.3.0-dev interaction + persistence foundation
+## 0.4.0-dev reliability + human interaction milestone
 
-The simulation has crossed the architectural boundary from a 2D prototype to a 3D heightfield authority. X/Z are world-plane coordinates and Y is elevation. The Godot 3.6 client now provides a real first-person testing surface while C++ remains the source of truth.
+The 3D foundation now has a usable human interaction path without making Godot authoritative.
 
 Implemented:
-- deterministic seeded terrain
-- 3D entity state and gravity/terrain collision
-- continuous simulation time
-- temperature/sunlight environment
-- versioned C++→Godot 3D state bridge
-- persistent snapshot writer
-- first-person Godot 3.6 test client
-- future agent action contract
-- resource deposits and inventory primitives
-- validated gather actions
-- external action bridge
-- versioned transactional save/load
-- cached terrain bridge
-- Origin calendar (second → year)
-- hardened physics integration
-- C++ tests
+- deterministic seeded 3D terrain
+- 3D entity state and physics
+- continuous time + calendar
+- environmental temperature/sunlight
+- versioned C++→Godot state bridge
+- cached terrain snapshot
+- resource deposits + inventory
+- authoritative gather action
+- explicit Agent vs DeveloperTest action source separation
+- dedicated HumanTester entity
+- Godot test-channel pose synchronization
+- Godot resource targeting and authoritative gathering
+- transactional save/load version 4
+- validation and version 3 migration
+- hardened command parsing/publication
+- expanded tests and sanitizer validation
 
 Not implemented yet:
+- crafting
+- construction
+- richer tools/material semantics
 - molecular chemistry
-- richer item/inventory rules and capacity semantics
-- crafting/construction
 - biology/life
-- LLM runtime or cognition
-- agent networking/transport
-- world chunk streaming
-- large-scale simulation LOD
-- advanced save migration
+- LLM runtime/cognition
+- agent networking
+- volumetric/chunked terrain
+- world streaming and simulation LOD
+- long-horizon experiment orchestration
 
-Those systems will be added only when their prerequisites are stable.
+The next milestone should add deeper world interaction only after these boundaries remain stable.

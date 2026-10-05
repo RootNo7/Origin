@@ -1,13 +1,23 @@
 #include "engine/time/simulation_clock.hpp"
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
 namespace origin {
+namespace {
+constexpr double kDefaultDt = 1.0 / 30.0;
+constexpr double kMinDt = 1e-6;
+constexpr double kMaxDt = 0.25;
+constexpr double kMaxSpeed = 16.0;
+}
 
 CalendarTime calendar_from_seconds(double seconds) {
     if (!std::isfinite(seconds) || seconds < 0.0) seconds = 0.0;
-    const double max_seconds = static_cast<double>(std::numeric_limits<std::uint64_t>::max());
-    const auto total = static_cast<std::uint64_t>(std::min(seconds, max_seconds));
+    const long double max_total = static_cast<long double>(std::numeric_limits<std::uint64_t>::max());
+    const long double safe_seconds = static_cast<long double>(seconds);
+    const auto total = safe_seconds >= max_total
+        ? std::numeric_limits<std::uint64_t>::max()
+        : static_cast<std::uint64_t>(safe_seconds);
 
     constexpr std::uint64_t kSecondsPerMinute = 60;
     constexpr std::uint64_t kMinutesPerHour = 60;
@@ -42,22 +52,30 @@ CalendarTime calendar_from_seconds(double seconds) {
 void SimulationClock::reset(double d) {
     tick_ = 0;
     sec_ = 0.0;
-    dt_ = d > 0.0 && std::isfinite(d) ? d : 1.0 / 30.0;
+    dt_ = std::clamp(std::isfinite(d) && d > 0.0 ? d : kDefaultDt, kMinDt, kMaxDt);
     speed_ = 1.0;
     paused_ = false;
 }
 
 void SimulationClock::advance() {
-    if (paused_) return;
-    sec_ += dt_ * speed_;
+    if (paused_ || tick_ == std::numeric_limits<std::uint64_t>::max()) return;
+    const double delta = dt_ * speed_;
+    if (!std::isfinite(delta) || delta < 0.0) return;
+    const double next_seconds = sec_ + delta;
+    if (!std::isfinite(next_seconds) || next_seconds < sec_) {
+        sec_ = std::numeric_limits<double>::max();
+        ++tick_;
+        return;
+    }
+    sec_ = next_seconds;
     ++tick_;
 }
 
 void SimulationClock::restore(std::uint64_t t, double s, double d, double sp, bool p) {
     tick_ = t;
     sec_ = std::max(0.0, std::isfinite(s) ? s : 0.0);
-    dt_ = d > 0.0 && std::isfinite(d) ? d : 1.0 / 30.0;
-    speed_ = std::max(0.0, std::isfinite(sp) ? sp : 1.0);
+    dt_ = std::clamp(std::isfinite(d) && d > 0.0 ? d : kDefaultDt, kMinDt, kMaxDt);
+    speed_ = std::clamp(std::isfinite(sp) && sp >= 0.0 ? sp : 1.0, 0.0, kMaxSpeed);
     paused_ = p;
 }
 }

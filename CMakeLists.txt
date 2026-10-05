@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Origin VERSION 0.3.0 LANGUAGES CXX)
+project(Origin VERSION 0.4.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,7 +15,9 @@ add_library(origin_engine
     engine/events/event_bus.cpp
     engine/simulation/simulation.cpp
     observer/rendering/console_renderer.cpp
-    observer/bridge/state_bridge.cpp observer/bridge/action_bridge.cpp
+    observer/bridge/state_bridge.cpp
+    observer/bridge/action_bridge.cpp
+    observer/bridge/developer_bridge.cpp
     storage/serialization/world_serializer.cpp
 )
 target_include_directories(origin_engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

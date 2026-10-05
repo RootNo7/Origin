@@ -1,46 +1,63 @@
-# Origin 0.3.0-dev
+# Origin 0.4.0-dev
 
 Origin is a persistent virtual-world research environment. It is not primarily a conventional open-world game. The long-term target is a systemic environment that humans can test and LLM agents can eventually inhabit through controlled perception/action interfaces.
 
-## Current 0.3.0-dev slice
+## Current 0.4.0-dev slice
 
 - C++20 simulation authority
 - deterministic seeded 3D heightfield terrain
-- 3D entity physics with gravity and terrain collision
-- continuous simulation clock
+- 3D entity physics with bounded substeps and finite-state recovery
+- continuous simulation clock + Origin calendar
 - environmental temperature/sunlight model
 - C++ state bridge with versioned 3D snapshots
+- cached terrain bridge
 - Godot 3.6 first-person human test client
-- authoritative resource deposits + inventory model
-- validated gather action path and external action bridge
-- versioned transactional save/load
-- cached terrain bridge to reduce per-tick I/O
-- virtual calendar derived from simulation time
-- physics substeps and finite-state recovery
-- executable C++ test suite
+- persistent resource deposits + inventory primitives
+- authoritative gather action with agent/developer source separation
+- atomic action/developer command claiming
+- explicit bridge rejection results for malformed/unsupported commands
+- transactional save/load with version 4 schema
+- version 3 save migration support
+- save validation for finite values, duplicate IDs/cells, inventory consistency and resource bounds
+- human-test pose bridge and authoritative human gathering from Godot
+- expanded automated regression coverage
 
-## Godot 3.6
+## Running the C++ validation
 
-Open this repository root as a Godot 3.6 project. Build/run the bridge first, then launch the Godot project. The Godot client reads `observer/bridge/state.txt` while C++ remains authoritative.
-
-On Windows:
+On Windows, from the repository root:
 
 ```text
 cmake -S . -B build
 cmake --build build --config Release
 ctest --test-dir build --output-on-failure -C Release
+```
+
+For the live bridge:
+
+```text
 scripts\\run\\run_origin_bridge.bat
 ```
 
-Then press F5 in Godot 3.6. Runtime verification still needs to be performed in that editor because it is not installed in the current development environment.
+Then open the repository root as a **Godot 3.6** project and press F5. Godot is the human-facing observer/client; C++ remains authoritative.
 
-Controls: WASD to move, mouse to look, Space to jump, Esc to release the mouse. Click the game window to recapture it.
+Controls: WASD to move, Space to jump, Esc to release the mouse, left-click while captured to attempt gathering the resource under the cursor.
+
+The Godot client communicates with the separate developer test channel:
+
+```text
+observer/bridge/test_commands.txt
+observer/bridge/test_results.txt
+```
+
+The agent channel remains:
+
+```text
+observer/bridge/commands.txt
+observer/bridge/results.txt
+```
+
+An agent cannot use the developer-only HumanTester actor through the normal `AgentAction` interface.
 
 ## Status
 
-This is a development foundation, not a completed virtual universe. Major systems such as crafting, construction, wildlife, advanced chemistry, streaming, richer agent perception/action transport, and long-horizon experimentation remain future milestones.
-
-
-### External action protocol
-
-The simulation exposes a deliberately narrow `gather <actor_id> <resource_id> <amount>` command through `observer/bridge/commands.txt`. The simulation validates the request and publishes the actual result to `results.txt`. See `observer/bridge/README.md`.
+This is an evolving foundation. Crafting, construction, richer item semantics, biology, volumetric terrain, chunk streaming, large-scale simulation LOD, networking, and LLM cognition remain future milestones.

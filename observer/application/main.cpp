@@ -2,6 +2,7 @@
 #include "observer/rendering/console_renderer.hpp"
 #include "observer/bridge/state_bridge.hpp"
 #include "observer/bridge/action_bridge.hpp"
+#include "observer/bridge/developer_bridge.hpp"
 #include "storage/serialization/world_serializer.hpp"
 #include <chrono>
 #include <filesystem>
@@ -37,8 +38,12 @@ int main(int argc, char** argv) {
         std::cout << (loaded ? "Origin bridge resumed from save.\n" : "Origin bridge started new world.\n");
         const auto command_path = std::filesystem::path("observer/bridge/commands.txt");
         const auto result_path = std::filesystem::path("observer/bridge/results.txt");
+        const auto test_command_path = std::filesystem::path("observer/bridge/test_commands.txt");
+        const auto test_result_path = std::filesystem::path("observer/bridge/test_results.txt");
         if (!std::filesystem::exists(command_path)) std::ofstream(command_path).close();
+        if (!std::filesystem::exists(test_command_path)) std::ofstream(test_command_path).close();
         for (;;) {
+            DeveloperBridge::process(simulation, test_command_path, test_result_path);
             ActionBridge::process(simulation, command_path, result_path);
             simulation.step();
             if (!StateBridge::write(simulation, "observer/bridge/state.txt")) return 1;

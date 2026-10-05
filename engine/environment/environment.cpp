@@ -4,7 +4,8 @@
 
 namespace origin {
 void Environment::step(World& world, double time_seconds, double dt) {
-    const double day_fraction = std::fmod(time_seconds, 86400.0) / 86400.0;
+    if (!std::isfinite(time_seconds) || !std::isfinite(dt) || dt <= 0.0) return;
+    const double day_fraction = std::fmod(std::max(0.0, time_seconds), 86400.0) / 86400.0;
     sun_ = std::max(0.0, std::sin(day_fraction * 6.283185307179586 - 1.570796326794897));
     temp_ = 286.0 + 3.0 * sun_;
 
@@ -15,5 +16,6 @@ void Environment::step(World& world, double time_seconds, double dt) {
             cell.temperature_k += (target - cell.temperature_k) * std::clamp(dt / 120.0, 0.0, 1.0);
         }
     }
+    world.mark_revision();
 }
 }

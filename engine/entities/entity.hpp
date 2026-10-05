@@ -2,6 +2,8 @@
 #include "engine/core/types.hpp"
 #include "engine/world/world.hpp"
 #include <array>
+#include <cmath>
+#include <limits>
 #include <string>
 
 namespace origin {
@@ -10,16 +12,23 @@ struct Inventory {
     static constexpr std::size_t kMaxStacks = 8;
     std::array<InventoryStack, kMaxStacks> stacks{};
 
-    bool can_add(ResourceKind kind) const {
-        for (const auto& stack : stacks) if (stack.amount > 0.0 && stack.kind == kind) return true;
+    double amount_of(ResourceKind kind) const {
+        double total = 0.0;
+        for (const auto& stack : stacks) if (stack.amount > 0.0 && stack.kind == kind) total += stack.amount;
+        return total;
+    }
+
+    bool can_add(ResourceKind kind, double amount = 1.0) const {
+        if (!std::isfinite(amount) || amount <= 0.0) return false;
+        for (const auto& stack : stacks) if (stack.amount > 0.0 && stack.kind == kind) return std::isfinite(stack.amount + amount);
         for (const auto& stack : stacks) if (stack.amount <= 0.0) return true;
         return false;
     }
 
     bool add(ResourceKind kind, double amount) {
-        if (amount <= 0.0) return false;
+        if (!std::isfinite(amount) || amount <= 0.0) return false;
         for (auto& stack : stacks) {
-            if (stack.amount > 0.0 && stack.kind == kind) { stack.amount += amount; return true; }
+            if (stack.amount > 0.0 && stack.kind == kind) { stack.amount += amount; return std::isfinite(stack.amount); }
         }
         for (auto& stack : stacks) {
             if (stack.amount <= 0.0) { stack.kind = kind; stack.amount = amount; return true; }

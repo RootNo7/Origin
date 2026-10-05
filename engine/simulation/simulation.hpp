@@ -10,6 +10,7 @@
 
 namespace origin {
 class Simulation {
+    static constexpr EntityId kUnsetTestActor = 0;
     SimulationClock clock_;
     World world_;
     EntityRegistry entities_;
@@ -17,11 +18,16 @@ class Simulation {
     ChemistryWorld chemistry_;
     Environment environment_;
     EventBus events_;
+    EntityId human_test_actor_id_ = kUnsetTestActor;
 public:
     Simulation(std::size_t width, std::size_t depth) : world_(width, depth) {}
     void initialize(std::uint32_t seed);
     void step();
-    AgentActionResult apply_action(const AgentAction& action);
+    AgentActionResult apply_action(const AgentAction& action, ActionSource source = ActionSource::Agent);
+    bool set_human_test_actor_pose(const Vec3& requested_position);
+    bool reset_human_test_actor();
+    EntityId human_test_actor_id() const { return human_test_actor_id_; }
+    void set_human_test_actor_id(EntityId id) { human_test_actor_id_ = id; }
     SimulationClock& clock() { return clock_; }
     const SimulationClock& clock() const { return clock_; }
     World& world() { return world_; }
@@ -31,5 +37,6 @@ public:
     Environment& environment() { return environment_; }
     const Environment& environment() const { return environment_; }
     EventBus& events() { return events_; }
+    const EventBus& events() const { return events_; }
 };
 }

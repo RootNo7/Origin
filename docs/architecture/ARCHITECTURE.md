@@ -4,7 +4,7 @@ Origin is a CPU-first persistent virtual-world platform. The simulation is autho
 
 ## Boundaries
 
-`engine/` = simulation authority: time, world, environment, physics, entities, chemistry and future agent-facing rules.
+`engine/` = simulation authority: time, world, environment, physics, entities, chemistry and agent-facing rules.
 
 `world/` = concrete world data/content definitions.
 
@@ -20,7 +20,7 @@ Origin is a CPU-first persistent virtual-world platform. The simulation is autho
 
 ## 3D foundation
 
-VEarth currently uses a deterministic 3D heightfield: X/Z horizontal, Y vertical. The representation is intentionally lightweight and can later evolve toward chunked/volumetric terrain without giving rendering authority to Godot.
+VEarth currently uses a deterministic 3D heightfield: X/Z horizontal, Y vertical. The representation is intentionally lightweight and can later evolve toward chunked or volumetric terrain without giving rendering authority to Godot.
 
 ## Data flow
 
@@ -28,21 +28,24 @@ World state → simulation systems → bridge snapshot → Godot client.
 
 Future agent path:
 
-agent request → validated action interface → simulation → authoritative result → perception/feedback.
+agent request → AgentAction validation → simulation → authoritative result → perception/feedback.
 
-Godot developer/testing controls remain separate from agent capabilities.
+Developer test path:
 
+Godot/test tool → DeveloperBridge → simulation → developer result → state snapshot.
 
-## 0.3.0 boundaries
+The two paths share authoritative world rules but have different capability boundaries.
 
-The current vertical slice is split into four authoritative boundaries:
+## 0.4.0 boundaries
 
-**World** — terrain, environmental cells, resources and persistent world revisions.
+**World** — terrain, environmental cells, resources and persistent revisions.
 
-**Entities** — physical bodies and inventory state.
+**Entities** — physical bodies and inventory state. HumanTester is a developer-only actor and cannot be addressed by the normal agent action source.
 
-**Action interface** — a deliberately narrow validated action surface. The simulation decides whether an action succeeds.
+**Agent action interface** — deliberately narrow and authoritative. Unknown/malformed external commands are explicitly rejected rather than silently disappearing.
 
-**Observer** — state/terrain snapshots and Godot visualization. The observer never becomes the source of truth.
+**Developer test interface** — pose, respawn and test-only gather for human validation. It is not exposed as an agent capability.
 
-Terrain geometry has its own revision counter, separate from the broader world revision, so resource changes do not force a terrain cache rebuild.
+**Observer** — versioned state/terrain snapshots and Godot visualization. The observer never becomes the source of truth.
+
+Terrain revision remains separate from the broader world revision so resource/environment changes do not force geometry rebuilds.
