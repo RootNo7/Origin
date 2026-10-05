@@ -1,8 +1,7 @@
-# Observer
+# Origin Godot Runtime
 
-The observer layer exposes authoritative simulation state without owning it.
+The `observer/godot/` tree is the active Origin runtime.
 
-- `application/` — C++ command-line runtime/bridge process.
-- `bridge/` — versioned text snapshot consumed by the Godot client.
-- `rendering/` — lightweight console observer.
-- `godot/` — Godot 3.6 first-person human testing client.
+Godot 3.6 is the only runtime required. The first-person tester, authoritative simulation, rendering, persistence, developer/test console and runtime diagnostics all execute in the same Godot application.
+
+There is no required C++ process or native bridge.

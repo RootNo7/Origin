@@ -1,6 +1,18 @@
+# Godot generated project data
+.godot/
+.import/
+export.cfg
+export_presets.cfg
+
+# Runtime saves/captures
+observer/bridge/
+storage/saves/
+user://
+
 build/
-.vscode/
-.idea/
-*.log
-storage/saves/*.origin
-observer/bridge/state.txt
+
+# Godot editor/OS noise
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak

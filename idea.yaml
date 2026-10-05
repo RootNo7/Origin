@@ -1,5 +1,22 @@
-project: {name: Origin, version: 0.4.0-dev, universe: VUniverse, first_world: VEarth, first_inhabitant: Eris}
-vision: "A persistent computational universe where physical, chemical, biological and intelligent processes can emerge from explicit rules."
-principles: ["universe independent of inhabitants", "agents learn through perception and action", "no omniscient hidden knowledge", "later multiple agents, reproduction and evolution", "observer separate from simulation truth", "3D simulation authority independent of rendering"]
-constraints: {godot: "3.x", performance: "CPU-first", gpu: "No CUDA/NVIDIA requirement", style: "professional, minimal, understandable, not over-engineered", world_representation: "deterministic 3D heightfield with persistent resource deposits"}
-languages: {simulation: C++20, observer: "Godot 3 GDScript", future_ai_ml: Python}
+name: Origin
+version: 0.6.0-dev
+purpose: persistent systemic 3D virtual world for human testing and future LLM-agent experiments
+runtime:
+  engine: Godot 3.6
+  language: GDScript
+  authoritative_runtime: observer/godot/scripts/OriginRuntime.gd
+  renderer_client: observer/godot/scripts/Main.gd
+  required_toolchain: Godot 3.6 only
+  native_reference: historical_only
+philosophy:
+  - world rules over scripted behavior
+  - persistence over respawned fakery
+  - systemic depth over feature count
+  - testability over presentation
+  - scalability over premature detail
+agent_boundary:
+  source_of_truth: Godot runtime
+  developer_actor: HumanTester
+  developer_controls_separate: true
+  unrestricted_developer_powers: false
+  normal_agent_capabilities: controlled and validated

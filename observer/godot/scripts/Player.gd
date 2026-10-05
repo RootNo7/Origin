@@ -14,6 +14,8 @@ func _ready():
     Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 func _unhandled_input(event):
+    if get_parent() != null and get_parent().has_method("is_developer_panel_visible") and get_parent().is_developer_panel_visible():
+        return
     if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
         rotate_y(-event.relative.x * mouse_sensitivity)
         pitch = clamp(pitch - event.relative.y * mouse_sensitivity, -1.45, 1.45)
@@ -24,6 +26,9 @@ func _unhandled_input(event):
         Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 func _physics_process(delta):
+    if get_parent() != null and get_parent().has_method("is_developer_panel_visible") and get_parent().is_developer_panel_visible():
+        velocity = Vector3.ZERO
+        return
     var input_vec = Vector2(
         float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
         float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W))

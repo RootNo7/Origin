@@ -1,5 +1,5 @@
-# World
+# World Data
 
-Concrete world definitions and data belong here.
+Origin's active VEarth simulation is authoritative inside `observer/godot/scripts/OriginRuntime.gd`.
 
-The current VEarth foundation is represented by the C++ engine as a deterministic 3D heightfield. Future terrain/resources/material datasets can be added here without moving simulation authority into Godot.
+This folder is reserved for future data-driven world content such as terrain datasets, materials and organism definitions. Rendering code should consume runtime state rather than becoming a second source of truth.

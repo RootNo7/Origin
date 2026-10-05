@@ -1,51 +1,45 @@
-# Architecture
+# Origin Architecture
 
-Origin is a CPU-first persistent virtual-world platform. The simulation is authoritative; Godot is a human-facing 3D client and observer.
+## Active runtime (0.6.0-dev)
 
-## Boundaries
+Origin is a **Godot 3.6-only application**. The runtime, simulation, rendering, human tester, persistence and developer/test tools live in one process.
 
-`engine/` = simulation authority: time, world, environment, physics, entities, chemistry and agent-facing rules.
+```text
+Godot 3.6
+│
+├── Main.gd
+│   ├── first-person human tester
+│   ├── terrain rendering/collision
+│   ├── resource/entity visuals
+│   └── developer/test console
+│
+└── OriginRuntime.gd  ← authoritative world + simulation
+    ├── deterministic VEarth terrain
+    ├── resources + inventory
+    ├── entities + simple physics
+    ├── environment + time/calendar
+    ├── controlled action validation
+    └── transactional persistence
+```
 
-`world/` = concrete world data/content definitions.
+There is no required C++ process, bridge executable, CMake build, or Visual Studio toolchain in the normal workflow.
 
-`observer/` = bridge, debug observer and Godot 3.6 client.
+## World authority
 
-`ai/` = future LLM agent implementations and cognition modules; no conventional scripted NPC population.
+`OriginRuntime.gd` owns the truth. Rendering reads its current state. A requested action is not considered successful until the runtime validates and applies it.
 
-`storage/` = persistence and save-format evolution.
+The dedicated developer/test actor exists for human testing. The normal agent source is prevented from addressing that actor.
 
-`experiments/` = controlled research configurations.
+## Persistence
 
-`tests/` = executable verification.
+The runtime writes versioned JSON snapshots to `user://origin/`. The current save format is version 6. Format 5 saves load directly and are rewritten as version 6 on the next save. Older native `ORIGIN_SAVE 3/4` text saves can be imported from `user://origin/world.save` or the historical `storage/saves/world.save` location; version-3 saves automatically receive a new HumanTester actor during migration.
 
-## 3D foundation
+Saves are written to a temporary file and published through a backup/rename sequence. Loads validate the complete candidate state before mutating the live runtime.
 
-VEarth currently uses a deterministic 3D heightfield: X/Z horizontal, Y vertical. The representation is intentionally lightweight and can later evolve toward chunked or volumetric terrain without giving rendering authority to Godot.
+## Developer/test workflow
 
-## Data flow
+The F1 console is inside the same application as the world. It can regenerate, save/load, run tests, benchmark, change simulation speed and capture screenshots without starting another runtime process.
 
-World state → simulation systems → bridge snapshot → Godot client.
+## Native migration
 
-Future agent path:
-
-agent request → AgentAction validation → simulation → authoritative result → perception/feedback.
-
-Developer test path:
-
-Godot/test tool → DeveloperBridge → simulation → developer result → state snapshot.
-
-The two paths share authoritative world rules but have different capability boundaries.
-
-## 0.4.0 boundaries
-
-**World** — terrain, environmental cells, resources and persistent revisions.
-
-**Entities** — physical bodies and inventory state. HumanTester is a developer-only actor and cannot be addressed by the normal agent action source.
-
-**Agent action interface** — deliberately narrow and authoritative. Unknown/malformed external commands are explicitly rejected rather than silently disappearing.
-
-**Developer test interface** — pose, respawn and test-only gather for human validation. It is not exposed as an agent capability.
-
-**Observer** — versioned state/terrain snapshots and Godot visualization. The observer never becomes the source of truth.
-
-Terrain revision remains separate from the broader world revision so resource/environment changes do not force geometry rebuilds.
+The previous C++ implementation is not part of the active repository. Historical 0.4/0.5 packages can be consulted when investigating the migration. Keeping it out of the active project prevents the old toolchain from becoming an accidental dependency again.

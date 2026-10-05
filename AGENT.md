@@ -6,38 +6,48 @@ Read `idea.yaml`, `NAMING.yaml`, `docs/PROJECT_DETAILS.md`, `docs/architecture/A
 Act as Origin's lead engineering agent: inspect, implement, test, playtest where possible, debug, optimize and document requested work without silently changing approved architecture.
 
 ## Current architecture
-- C++20 is the authoritative simulation.
-- VEarth is a deterministic 3D heightfield: X/Z horizontal, Y vertical.
-- Godot 3.6 is the human-facing first-person client/observer.
-- `observer/bridge/state.txt` is a versioned snapshot bridge; it is not authoritative state.
-- `commands.txt` is the future controlled agent-action channel.
-- `test_commands.txt` is developer/test-only and may move the dedicated HumanTester actor.
-- Future agents must use explicit perception/action interfaces validated by the simulation.
+- **Godot 3.6 is the active and only runtime.**
+- `observer/godot/scripts/OriginRuntime.gd` is the authoritative simulation for the playable project.
+- `observer/godot/scripts/Main.gd` is the first-person client, renderer and developer/test surface.
+- Rendering consumes runtime state; it is not a second simulation.
+- Persistence is handled by the Godot runtime under `user://origin/`.
+- `OriginRuntime.gd` exposes a deliberately small controlled action interface for future agents.
+- The previous native implementation is historical only and is not included in the active repository.
 - No conventional scripted NPC society is required.
 
 ## Hard rules
 - Godot **3.6 compatibility is mandatory**. Never introduce Godot 4 APIs.
 - `project.godot` stays in the repository root.
-- Simulation truth remains independent of rendering.
+- Runtime simulation truth stays independent of rendering code.
 - CPU-first; no CUDA/NVIDIA requirement.
 - Prefer clear, testable, data-driven systems over giant scripts and unnecessary abstractions.
 - Never give future agents hidden/omniscient state or unrestricted developer powers.
-- Do not allow normal `AgentAction` requests to address the developer-only HumanTester actor.
-- Do not claim code is working without meaningful verification.
+- The developer-only `HumanTester` actor must never be controllable through the normal agent source.
+- Never claim code is working without meaningful verification.
 - Major architecture changes require approval.
+- Do not reintroduce a required native executable/compiler into the normal run path.
+
+## One-application workflow
+- Open the repository in Godot 3.6.
+- Or use the root `RUN_ORIGIN.bat` for the same Godot-only runtime.
+- Press Play/F6 to run the complete world.
+- F1 opens the developer/test console.
+- The console can save/load, regenerate, run self-tests, benchmark, change simulation speed and capture screenshots.
+- `scripts/run_tests.bat` invokes the same runtime tests through Godot with its no-window mode when Godot is available.
 
 ## Work loop
-Inspect → smallest correct change → compile → test → run/playtest when practical → fix errors → optimize → update docs → report exactly what changed and what was verified.
+Inspect → smallest correct change → run static/compatibility checks → run Godot tests where practical → playtest → fix errors → optimize → update docs → report exactly what changed and what was verified.
 
-## Foundation + 0.4.0 validation
-1. C++ engine builds.
-2. Automated tests pass.
-3. Executable runs and saves.
-4. Save/resume works.
-5. Agent command bridge validates/rejects commands explicitly.
-6. Developer test bridge can drive HumanTester and use authoritative interaction.
-7. State bridge emits a versioned 3D snapshot.
-8. Godot 3.6 consumes the snapshot and exposes a first-person world.
+## Current 0.6.0-dev validation targets
+1. The project opens directly in Godot 3.6 with no C++ toolchain.
+2. The Godot runtime generates deterministic 3D terrain.
+3. First-person movement and terrain collision work.
+4. Resource targeting/gathering is authoritative.
+5. Developer and agent capabilities remain separated.
+6. JSON save/load is transactional, supports bounded custom dimensions, and invalid loads are atomic.
+7. Runtime self-tests, full scene smoke test and benchmark run from Godot.
+8. Screenshots can be captured from the in-game developer console.
+9. Previous format-5 JSON and ORIGIN_SAVE 3/4 migrations remain supported.
 
-## Known validation limitation
-If Godot 3.6 is not installed in the development environment, GDScript compatibility must be checked for 3.x API usage and the client must be explicitly marked runtime-unverified until it is opened and played in Godot 3.6.
+## Known environment limitation
+If Godot 3.6 is not installed in the development environment, perform strict Godot 3.x API/static checks and clearly mark live Godot execution as unverified. Do not silently fall back to C++ as the project's runtime.

@@ -1,63 +1,95 @@
-# Origin 0.4.0-dev
+# Origin 0.6.0-dev
 
 Origin is a persistent virtual-world research environment. It is not primarily a conventional open-world game. The long-term target is a systemic environment that humans can test and LLM agents can eventually inhabit through controlled perception/action interfaces.
 
-## Current 0.4.0-dev slice
+## 0.6.0-dev: single-application runtime
 
-- C++20 simulation authority
-- deterministic seeded 3D heightfield terrain
-- 3D entity physics with bounded substeps and finite-state recovery
-- continuous simulation clock + Origin calendar
-- environmental temperature/sunlight model
-- C++ state bridge with versioned 3D snapshots
-- cached terrain bridge
-- Godot 3.6 first-person human test client
-- persistent resource deposits + inventory primitives
-- authoritative gather action with agent/developer source separation
-- atomic action/developer command claiming
-- explicit bridge rejection results for malformed/unsupported commands
-- transactional save/load with version 4 schema
-- version 3 save migration support
-- save validation for finite values, duplicate IDs/cells, inventory consistency and resource bounds
-- human-test pose bridge and authoritative human gathering from Godot
-- expanded automated regression coverage
+The active Origin runtime is now **Godot 3.6-only**.
 
-## Running the C++ validation
+You do **not** need:
 
-On Windows, from the repository root:
+- Visual Studio
+- CMake
+- a C++ compiler
+- a separate C++ executable
+- a second bridge process
 
-```text
-cmake -S . -B build
-cmake --build build --config Release
-ctest --test-dir build --output-on-failure -C Release
-```
+Godot now owns the active runtime simulation, terrain, resource state, physics, time, persistence, human testing, developer controls, tests and rendering in one application.
 
-For the live bridge:
+The previous native implementation is no longer included in the active repository. Earlier 0.4/0.5 project packages remain the historical reference. This release has no native runtime dependency.
 
-```text
-scripts\\run\\run_origin_bridge.bat
-```
+## Run
 
-Then open the repository root as a **Godot 3.6** project and press F5. Godot is the human-facing observer/client; C++ remains authoritative.
+Open this repository in **Godot 3.6** and press Play/F6.
 
-Controls: WASD to move, Space to jump, Esc to release the mouse, left-click while captured to attempt gathering the resource under the cursor.
+Or run `scripts\\run_origin.bat` when a Godot executable is available on PATH or at the locations documented by the script.
 
-The Godot client communicates with the separate developer test channel:
+## Controls
 
-```text
-observer/bridge/test_commands.txt
-observer/bridge/test_results.txt
-```
+WASD = move  
+Space = jump  
+Left-click = gather the resource actually hit by the camera ray  
+Esc = release/capture mouse  
+F1 = developer/test console
 
-The agent channel remains:
+The F1 console can:
+
+- create a new world
+- save/load the persistent world
+- run the runtime self-tests
+- run a full scene smoke test
+- benchmark 10,000 simulation ticks
+- capture a screenshot
+- pause/resume simulation
+- change simulation speed
+
+## Architecture
 
 ```text
-observer/bridge/commands.txt
-observer/bridge/results.txt
+Godot 3.6
+  ├─ First-person human test client
+  ├─ Rendering
+  ├─ Input / developer console
+  ├─ Persistence
+  └─ OriginRuntime.gd  ← authoritative simulation
+        ├─ VEarth terrain
+        ├─ time/calendar
+        ├─ environment
+        ├─ physics
+        ├─ resources
+        ├─ inventory
+        └─ controlled action interface
+
+No native backend is present in the active project. Historical 0.4/0.5 packages can be kept separately when comparing migrations.
 ```
 
-An agent cannot use the developer-only HumanTester actor through the normal `AgentAction` interface.
+The world remains authoritative. Rendering is a consumer of runtime state, not a second simulation.
 
-## Status
+## Verification
 
-This is an evolving foundation. Crafting, construction, richer item semantics, biology, volumetric terrain, chunk streaming, large-scale simulation LOD, networking, and LLM cognition remain future milestones.
+Use `scripts\\run_tests.bat` for the Godot headless self-test when Godot is available. The same checks are available from the in-game F1 console.
+
+The runtime self-test covers world dimensions, ID uniqueness, deterministic terrain, developer gathering, agent/developer separation, both current and previous save formats, simulation-speed semantics, and invalid-save atomicity.
+
+## Current scope
+
+Implemented:
+
+- deterministic 3D procedural terrain
+- persistent resource deposits
+- resource gathering
+- inventory
+- first-person controller
+- time + Origin calendar
+- day/night sunlight
+- environmental temperature
+- dynamic stone physics
+- transactional JSON save/load
+- legacy ORIGIN_SAVE 3/4 import plus automatic loading of the previous Godot JSON save format
+- custom saved world dimensions within the bounded runtime limit
+- developer/test console
+- runtime self-tests
+- integrated benchmark
+- integrated screenshot capture
+
+Future milestones can now build directly on the Godot runtime without maintaining a second executable.
