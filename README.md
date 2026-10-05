@@ -1,8 +1,8 @@
-# Origin 0.6.0-dev
+# Origin 0.6.1-dev
 
 Origin is a persistent virtual-world research environment. It is not primarily a conventional open-world game. The long-term target is a systemic environment that humans can test and LLM agents can eventually inhabit through controlled perception/action interfaces.
 
-## 0.6.0-dev: single-application runtime
+## 0.6.1-dev: single-application runtime + startup hardening
 
 The active Origin runtime is now **Godot 3.6-only**.
 
@@ -20,7 +20,7 @@ The previous native implementation is no longer included in the active repositor
 
 ## Run
 
-Open this repository in **Godot 3.6** and press Play/F6.
+Open this repository in **Godot 3.6.x** and press Play/F5. The standard Godot 3 build is all that is required; no C++ toolchain is part of Origin.
 
 Or run `scripts\\run_origin.bat` when a Godot executable is available on PATH or at the locations documented by the script.
 

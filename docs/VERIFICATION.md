@@ -1,4 +1,4 @@
-# Verification — Origin 0.6.0-dev
+# Verification — Origin 0.6.1-dev
 
 Static checks completed:
 

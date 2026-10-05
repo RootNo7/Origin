@@ -1,5 +1,5 @@
 name: Origin
-version: 0.6.0-dev
+version: 0.6.1-dev
 purpose: persistent systemic 3D virtual world for human testing and future LLM-agent experiments
 runtime:
   engine: Godot 3.6

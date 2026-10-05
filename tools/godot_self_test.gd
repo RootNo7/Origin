@@ -1,9 +1,12 @@
 extends SceneTree
 
-const RuntimeScript = preload("res://observer/godot/scripts/OriginRuntime.gd")
-
 func _init():
-    var runtime = RuntimeScript.new()
+    var runtime_script = load("res://observer/godot/scripts/OriginRuntime.gd")
+    if runtime_script == null:
+        print("OriginRuntime.gd failed to load. Fix the first parser error shown by Godot before running tests again.")
+        quit(2)
+        return
+    var runtime = runtime_script.new()
     runtime.initialize()
     var result = runtime.run_self_tests()
     var benchmark = runtime.benchmark(10000)

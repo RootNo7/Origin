@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.1-dev
+
+- Fixed the Godot 3.x parser failure caused by using `seed` as an in-memory member variable name; the serialized save key remains `seed`.
+- Fixed the cascading `Main.gd` preload error by loading the runtime and player scripts at startup instead of compile-time preloading them.
+- Added a visible startup error panel so script-load failures cannot degrade into an unexplained grey screen.
+- Made the headless Godot self-test report a clear runtime-script load failure instead of a secondary preload error.
+- Fixed the event log bound so `MAX_EVENT_LOG` is actually respected.
+
+
 ## 0.6.0-dev
 
 - Completed the runtime consolidation: Origin is now a single Godot 3.6 application with no active C++ backend or compiler dependency.
