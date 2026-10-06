@@ -27,18 +27,21 @@ var screenshot_path = "user://origin/captures/latest.png"
 var pending_gather = false
 var world_environment_node = null
 var sun_node = null
+var startup_failed = false
 
 func _ready():
 	var runtime_script = load(RUNTIME_PATH)
 	if runtime_script == null:
-		_show_startup_error("OriginRuntime.gd could not be loaded", "The simulation script has a parse/compile error. Open the Godot debugger and fix the first reported OriginRuntime.gd error.")
+		_show_startup_error("OriginRuntime.gd could not be loaded", "The simulation script has a parse/compile error. Check the first debugger error for OriginRuntime.gd.")
 		return
 	player_script = load(PLAYER_PATH)
 	if player_script == null:
-		_show_startup_error("Player.gd could not be loaded", "The first-person controller script has a parse/compile error. Open the Godot debugger and fix the first reported Player.gd error.")
+		_show_startup_error("Player.gd could not be loaded", "The first-person controller script has a parse/compile error. Check the first debugger error for Player.gd.")
 		return
 	runtime = runtime_script.new()
-	runtime.initialize()
+	if not runtime.initialize():
+		_show_startup_error("Simulation initialization failed", "OriginRuntime.initialize() did not complete.")
+		return
 	var resumed = runtime.load_world()
 	_create_environment()
 	_sync_environment_visuals()
@@ -47,7 +50,9 @@ func _ready():
 		banner_label.text = "Loaded persistent Origin world."
 	else:
 		banner_label.text = "New Origin world generated."
-	_rebuild_terrain()
+	if not _rebuild_terrain():
+		_show_startup_error("Terrain build failed", "The generated world data could not be converted into a renderable terrain mesh.")
+		return
 	_create_player()
 	_sync_world_visuals()
 	last_saved_persistent_revision = runtime.persistent_revision
@@ -55,14 +60,14 @@ func _ready():
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 func _physics_process(_delta):
-	if runtime == null:
+	if startup_failed or runtime == null:
 		return
 	if pending_gather:
 		pending_gather = false
 		_perform_gather_ray()
 
 func _process(delta):
-	if runtime == null:
+	if startup_failed or runtime == null:
 		return
 	runtime.advance_frame(delta)
 	_sync_environment_visuals()
@@ -81,6 +86,8 @@ func _process(delta):
 	_update_hud()
 
 func _input(event):
+	if startup_failed:
+		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == BUTTON_LEFT:
 		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 			pending_gather = true
@@ -98,31 +105,44 @@ func _create_environment():
 	world_environment_node = world_env
 	var environment = Environment.new()
 	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color(0.03, 0.05, 0.08)
+	environment.background_color = Color(0.12, 0.20, 0.34)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.6, 0.65, 0.72)
-	environment.ambient_light_energy = 0.65
+	environment.ambient_light_color = Color(0.65, 0.69, 0.76)
+	environment.ambient_light_energy = 0.55
 	world_env.environment = environment
 	add_child(world_env)
 
 	sun_node = DirectionalLight.new()
 	sun_node.name = "Sun"
-	sun_node.light_energy = 0.15
-	sun_node.rotation_degrees = Vector3(-15, -30, 0)
+	sun_node.shadow_enabled = true
+	sun_node.rotation_degrees = Vector3(-35, -35, 0)
+	sun_node.light_energy = 0.9
 	add_child(sun_node)
 
 func _sync_environment_visuals():
 	if runtime == null:
 		return
+	var fraction = runtime.solar_day_fraction()
+	var angle = fraction * PI * 2.0
+	var sun_height = sin(angle - PI * 0.5)
+	var daylight = clamp(max(0.0, sun_height), 0.0, 1.0)
+	var twilight = clamp(1.0 - abs(sun_height) / 0.25, 0.0, 1.0)
 	if sun_node != null:
-		var day_fraction = fmod(max(0.0, runtime.seconds), 86400.0) / 86400.0
-		var sun_angle = day_fraction * 360.0 - 90.0
-		sun_node.rotation_degrees = Vector3(sun_angle, -30.0, 0.0)
-		sun_node.light_energy = 0.15 + runtime.sunlight * 1.1
+		sun_node.rotation_degrees = Vector3(-15.0 - daylight * 60.0, fraction * 360.0 - 90.0, 0.0)
+		sun_node.light_energy = 0.035 + daylight * 1.05 + twilight * 0.12
+		if sun_height < 0.12:
+			sun_node.light_color = Color(1.0, 0.58 + daylight * 0.32, 0.40 + daylight * 0.40)
+		else:
+			sun_node.light_color = Color(1.0, 0.93, 0.80)
 	if world_environment_node != null and world_environment_node.environment != null:
-		var daylight = runtime.sunlight
-		world_environment_node.environment.ambient_light_energy = 0.20 + daylight * 0.55
-		world_environment_node.environment.background_color = Color(0.008 + daylight * 0.025, 0.012 + daylight * 0.04, 0.025 + daylight * 0.055)
+		world_environment_node.environment.ambient_light_energy = 0.11 + daylight * 0.72 + twilight * 0.09
+		if sun_height < -0.20:
+			world_environment_node.environment.background_color = Color(0.015, 0.025, 0.065)
+		elif sun_height < 0.15:
+			var twilight_t = clamp((sun_height + 0.20) / 0.35, 0.0, 1.0)
+			world_environment_node.environment.background_color = Color(0.05 + twilight_t * 0.18, 0.04 + twilight_t * 0.18, 0.09 + twilight_t * 0.35)
+		else:
+			world_environment_node.environment.background_color = Color(0.11 + daylight * 0.10, 0.20 + daylight * 0.16, 0.34 + daylight * 0.22)
 
 func _create_hud():
 	var canvas = CanvasLayer.new()
@@ -284,12 +304,12 @@ func _capture_screenshot():
 
 func _rebuild_terrain():
 	if runtime == null or runtime.heights.size() != runtime.width * runtime.depth:
-		return
-	if terrain_mesh:
+		return false
+	if terrain_mesh != null and is_instance_valid(terrain_mesh):
 		terrain_mesh.queue_free()
-	if terrain_collision:
+	if terrain_collision != null and is_instance_valid(terrain_collision):
 		terrain_collision.queue_free()
-	if water_node:
+	if water_node != null and is_instance_valid(water_node):
 		water_node.queue_free()
 
 	var mesh = ArrayMesh.new()
@@ -311,8 +331,12 @@ func _rebuild_terrain():
 			var b = a + runtime.width
 			var c = a + 1
 			var d = b + 1
-			indices.append(a); indices.append(b); indices.append(c)
-			indices.append(c); indices.append(b); indices.append(d)
+			indices.append(a)
+			indices.append(b)
+			indices.append(c)
+			indices.append(c)
+			indices.append(b)
+			indices.append(d)
 	var arrays = []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = vertices
@@ -324,27 +348,30 @@ func _rebuild_terrain():
 	material.roughness = 1.0
 	mesh.surface_set_material(0, material)
 	terrain_mesh = MeshInstance.new()
-	terrain_mesh.name = "VEarthTerrain"
+	terrain_mesh.name = "Terrain"
 	terrain_mesh.mesh = mesh
 	add_child(terrain_mesh)
 
-	var static_body = StaticBody.new()
-	static_body.name = "VEarthCollision"
-	var collision = CollisionShape.new()
-	collision.shape = mesh.create_trimesh_shape()
-	static_body.add_child(collision)
-	add_child(static_body)
-	terrain_collision = static_body
+	var shape = mesh.create_trimesh_shape()
+	if shape != null:
+		var static_body = StaticBody.new()
+		static_body.name = "TerrainCollision"
+		var collision = CollisionShape.new()
+		collision.shape = shape
+		static_body.add_child(collision)
+		add_child(static_body)
+		terrain_collision = static_body
 
 	var water_mesh = PlaneMesh.new()
 	water_mesh.size = Vector2(runtime.width - 1, runtime.depth - 1)
 	water_mesh.material = _water_material()
 	water_node = MeshInstance.new()
-	water_node.name = "SeaLevel"
+	water_node.name = "Water"
 	water_node.mesh = water_mesh
 	water_node.translation = Vector3((runtime.width - 1) * 0.5, runtime.sea_level, (runtime.depth - 1) * 0.5)
 	add_child(water_node)
 	last_terrain_revision = runtime.terrain_revision
+	return true
 
 func _water_material():
 	var mat = SpatialMaterial.new()
@@ -462,6 +489,9 @@ func _sync_resources():
 	var seen = {}
 	for item in runtime.resources:
 		var id = int(item.id)
+		# Water is the world medium and is represented by the sea surface, not a resource cube.
+		if int(item.kind) == 2:
+			continue
 		if float(item.remaining) <= 0.0:
 			continue
 		seen[id] = true
@@ -512,14 +542,16 @@ func _update_hud():
 	var cal = runtime.calendar()
 	var inv = runtime.human_inventory()
 	var paused_text = "PAUSED" if runtime.paused else "RUNNING"
+	var phase = runtime.solar_phase_name()
 	var focus = ""
 	if result_flash_timer > 0.0:
 		focus = "\nLast action: %s" % last_action_text
 	var save_state = "CLEAN" if runtime.persistent_revision == last_saved_persistent_revision else "DIRTY/AUTOSAVE"
-	status_label.text = "ORIGIN 0.6.1 | %s | t=%0.2fs tick=%d  Y=%0.2f\nCalendar Y%d M%d D%d  %02d:%02d:%02d\nTemp %0.1fK  Sun %0.2f  Speed x%0.1f  Save %s\nStone %.1f  Wood %.1f  Water %.1f  Soil %.1f\nWASD move  Space jump  Left-click gather  F1 console  Esc mouse | FPS %d%s" % [paused_text, runtime.seconds, runtime.tick, player.global_transform.origin.y, cal[0], cal[1] + 1, cal[2] + 1, cal[4], cal[5], cal[6], runtime.global_temperature, runtime.sunlight, runtime.speed, save_state, inv[0], inv[1], inv[2], inv[3], Engine.get_frames_per_second(), focus]
+	status_label.text = "ORIGIN 0.7.1 | %s | t=%0.2fs tick=%d  Y=%0.2f\nCalendar Y%d M%d D%d  %02d:%02d:%02d\nTemp %0.1fK  Sun %0.2f  %s  Speed x%0.1f  Save %s\nStone %.1f  Wood %.1f  Water %.1f  Soil %.1f\nWASD move  Space jump  Left-click gather  F1 console  Esc mouse | FPS %d%s" % [paused_text, runtime.seconds, runtime.tick, player.global_transform.origin.y, cal[0], cal[1] + 1, cal[2] + 1, cal[4], cal[5], cal[6], runtime.global_temperature, runtime.sunlight, phase, runtime.speed, save_state, inv[0], inv[1], inv[2], inv[3], Engine.get_frames_per_second(), focus]
 	crosshair_label.rect_position = get_viewport().size * 0.5 - Vector2(4, 12)
 
 func _show_startup_error(title, message):
+	startup_failed = true
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	var canvas = CanvasLayer.new()
 	canvas.name = "StartupError"

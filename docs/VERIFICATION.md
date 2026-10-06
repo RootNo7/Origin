@@ -1,21 +1,22 @@
-# Verification — Origin 0.6.1-dev
+# Verification — Origin 0.7.2-dev
 
-Static checks completed:
+## Godot 3.6 compatibility audit
 
-- `project.godot` contains one application section and points to the Godot 3.6 main scene.
-- All `res://` references resolve to files in the active project.
-- Active GDScript contains no Godot 4-only classes/syntax detected by the release audit.
-- No active `.cpp/.hpp/.h`, CMake project, native bridge, or native executable remains in the runtime tree.
-- GDScript delimiter balance and basic structure checks pass.
-- Persistence validation covers malformed dictionaries, bounds, IDs, inventory, environment and save-size limits.
+- Active runtime is Godot/GDScript only.
+- No C++/CMake build is required.
+- Removed the C-style `condition ? a : b` expression from `OriginRuntime.gd`.
+- No `?` ternary syntax remains in active `.gd` files.
+- No Godot 4-only tokens detected in active `.gd` files.
+- Main scene is `observer/godot/scenes/Main.tscn`.
 
-Runtime diagnostics included in the project:
+## User-reported 0.6.1 failure
 
-- F1 self-test runner
-- F1 10,000-tick benchmark
-- in-process screenshot capture
-- full scene smoke test from the developer console
-- automatic resume/autosave/save-on-exit
-- previous-format and legacy-save migration paths
+The reported parser error at `OriginRuntime.gd` line 408 was caused by a C-style ternary expression in `set_speed()`. Godot 3.x uses the `value_if_true if condition else value_if_false` form, not `condition ? a : b`.
 
-Godot runtime execution can only be marked verified on a machine where Godot 3.6.x is available. The development environment used to assemble this package does not contain a Godot executable, so the final package is statically compatibility-checked but not falsely marked as visually playtested here.
+The invalid expression has been replaced with explicit Godot 3-compatible control flow.
+
+The grey window was a downstream startup failure: `OriginRuntime.gd` could not compile, so `Main.gd` could not initialize the runtime/world.
+
+## Local limitation
+
+The development container does not include the Godot 3.6 executable, so graphical F5/F6 execution cannot be truthfully marked as container-tested. Static compatibility checks and source audits are performed here.

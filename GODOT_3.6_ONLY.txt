@@ -1,0 +1,15 @@
+ORIGIN — GODOT 3.6 ONLY
+========================
+
+Required engine: Godot 3.6.x (standard build).
+Current target: Godot 3.6.3-stable.
+Renderer: GLES2.
+
+This project is NOT a Godot 4 project. Do not open it in Godot 4.
+
+Use RUN_ORIGIN_GODOT3.6.bat (or RUN_ORIGIN.bat). The launcher:
+1. Looks only for GODOT3_EXECUTABLE, a bundled 3.6.3 executable, or a godot3 PATH command.
+2. NEVER falls back to a generic `godot` command.
+3. Reads `--version` and refuses to start unless the executable reports 3.6.x.
+
+The project.godot file also declares the Godot 3.6 feature tag.

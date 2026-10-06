@@ -13,7 +13,8 @@ config_version=4
 config/name="Origin"
 config/description="Origin virtual universe — Godot 3.6-only CPU-first persistent 3D simulation and human test environment."
 run/main_scene="res://observer/godot/scenes/Main.tscn"
-config/version="0.6.1-dev"
+config/features=PoolStringArray( "3.6" )
+config/version="0.7.2-dev"
 
 [display]
 
@@ -24,5 +25,4 @@ window/stretch/mode="2d"
 [rendering]
 
 quality/driver/driver_name="GLES2"
-renderer/driver/driver_name="GLES2"
 textures/default_filters/use_nearest_mipmap_filter=false

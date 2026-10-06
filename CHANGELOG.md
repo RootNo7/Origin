@@ -1,18 +1,23 @@
 # Changelog
 
-## 0.6.1-dev
+## 0.7.2-dev
 
 - Fixed the Godot 3.x parser failure caused by using `seed` as an in-memory member variable name; the serialized save key remains `seed`.
 - Fixed the cascading `Main.gd` preload error by loading the runtime and player scripts at startup instead of compile-time preloading them.
 - Added a visible startup error panel so script-load failures cannot degrade into an unexplained grey screen.
 - Made the headless Godot self-test report a clear runtime-script load failure instead of a secondary preload error.
 - Fixed the event log bound so `MAX_EVENT_LOG` is actually respected.
+- Rebuilt the active 0.7.1 client from the last confirmed-working 0.6.2 Godot path instead of carrying forward the experimental 0.7.0 rendering/physics layer.
+- Removed the experimental custom sky shader, shader parameters, and GLES3 renderer change from the active runtime.
+- Added deterministic multi-scale terrain, safe HumanTester spawn selection, and a real 10-minute solar cycle.
+- Added terrain relief, water-presence, spawn-safety, and solar-contrast regression checks.
+- Water is presented as the world sea surface rather than an extra blue resource cube.
 
 
 ## 0.6.0-dev
 
 - Completed the runtime consolidation: Origin is now a single Godot 3.6 application with no active C++ backend or compiler dependency.
-- Added the root `RUN_ORIGIN.bat` one-click launcher.
+- Added the root `RUN_ORIGIN_GODOT3.6.bat` one-click launcher.
 - F1 developer/test console remains inside the same running world application.
 - Added a full scene smoke test that verifies the runtime, player, camera, terrain, collision, water and resource visuals together.
 - Added automatic resume from the persistent Godot JSON world.

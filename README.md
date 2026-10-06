@@ -1,8 +1,8 @@
-# Origin 0.6.1-dev
+# Origin 0.7.2-dev
 
 Origin is a persistent virtual-world research environment. It is not primarily a conventional open-world game. The long-term target is a systemic environment that humans can test and LLM agents can eventually inhabit through controlled perception/action interfaces.
 
-## 0.6.1-dev: single-application runtime + startup hardening
+## 0.7.2-dev: single-application runtime + startup hardening
 
 The active Origin runtime is now **Godot 3.6-only**.
 
@@ -69,7 +69,7 @@ The world remains authoritative. Rendering is a consumer of runtime state, not a
 
 Use `scripts\\run_tests.bat` for the Godot headless self-test when Godot is available. The same checks are available from the in-game F1 console.
 
-The runtime self-test covers world dimensions, ID uniqueness, deterministic terrain, developer gathering, agent/developer separation, both current and previous save formats, simulation-speed semantics, and invalid-save atomicity.
+The runtime self-test covers world dimensions, terrain relief, water existence, safe HumanTester spawn, solar day/night contrast, ID uniqueness, deterministic terrain, developer gathering, agent/developer separation, both current and previous save formats, simulation-speed semantics, and invalid-save atomicity.
 
 ## Current scope
 
@@ -93,3 +93,10 @@ Implemented:
 - integrated screenshot capture
 
 Future milestones can now build directly on the Godot runtime without maintaining a second executable.
+
+
+## 0.7.2-dev stability note
+
+This release is a regression recovery build based on the last confirmed-working 0.6.2 runtime. It keeps the Godot 3.6/GLES2 execution path, removes experimental shader-dependent presentation, and reintroduces only deterministic terrain/time changes.
+
+Actual Godot graphical F5 execution must still be performed with Godot 3.6 on the target machine; the repository includes static compatibility checks and in-Godot self-tests for runtime verification.

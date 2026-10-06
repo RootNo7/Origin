@@ -1,6 +1,6 @@
 extends Reference
 
-# Origin 0.6 runtime
+# Origin 0.7.2-dev stable runtime
 # The runtime is authoritative for the playable Godot build.
 # The previous native backend is historical only; the active project contains no native runtime dependency.
 
@@ -15,6 +15,8 @@ const DEFAULT_WIDTH = 96
 const DEFAULT_DEPTH = 96
 const DEFAULT_SEED = 7
 const DEFAULT_DT = 1.0 / 30.0
+const DAY_LENGTH_SECONDS = 600.0
+const START_DAY_FRACTION = 0.30
 const MIN_DT = 0.000001
 const MAX_DT = 0.25
 const MAX_SPEED = 16.0
@@ -68,12 +70,13 @@ func initialize(p_seed = DEFAULT_SEED, p_width = DEFAULT_WIDTH, p_depth = DEFAUL
 	persistent_revision = 0
 	terrain_revision = 0
 	tick = 0
-	seconds = 0.0
+	seconds = DAY_LENGTH_SECONDS * START_DAY_FRACTION
 	fixed_dt = DEFAULT_DT
 	speed = 1.0
 	paused = false
 	human_test_actor_id = 0
-	sunlight = 0.0
+	var initial_sun = sin((START_DAY_FRACTION - 0.25) * PI * 2.0)
+	sunlight = clamp(max(0.0, initial_sun), 0.0, 1.0)
 	global_temperature = 286.0
 	accumulator = 0.0
 	environment_accumulator = 0.0
@@ -99,16 +102,18 @@ func _generate_world():
 			var fz = float(z)
 			var nx = (fx - cx) / scale
 			var nz = (fz - cz) / scale
-			var continent = sin(nx * PI * 2.0) * 1.9 + cos(nz * PI * 1.7) * 1.5 + sin((nx + nz) * PI * 4.0) * 0.7
-			var detail = sin(fx * 0.18) * 0.55 + cos(fz * 0.16) * 0.45 + (_hash01(x, z) - 0.5) * 0.5
-			var h = clamp(8.0 + continent + detail, 1.0, 26.0)
+			var continent = sin(nx * PI * 1.8) * 2.6 + cos(nz * PI * 1.55) * 2.15 + sin((nx - nz) * PI * 3.6) * 1.15
+			var hills = sin(fx * 0.072 + fz * 0.041) * 1.35 + cos(fx * 0.043 - fz * 0.091) * 0.95
+			var detail = (_hash01(x, z) - 0.5) * 0.65
+			var h = clamp(8.1 + continent + hills + detail, 1.0, 28.0)
 			var latitude = (fz / max(1.0, float(depth - 1))) * PI
 			var t = 287.0 - 5.0 * cos(latitude) + 1.5 * sin(fx * 0.035 + fz * 0.02)
 			var idx = z * width + x
 			heights[idx] = h
 			temperatures[idx] = t
 			water_depths[idx] = max(0.0, sea_level - h)
-			humidity[idx] = 0.85 if water_depths[idx] > 0.0 else 0.45
+			var coastal = clamp(water_depths[idx] / 4.0, 0.0, 1.0)
+			humidity[idx] = clamp(0.45 + coastal * 0.36 + (_hash01(x + 73, z - 31) - 0.5) * 0.10, 0.05, 0.98)
 	terrain_revision = 1
 	world_revision = 1
 	_generate_resources()
@@ -146,11 +151,57 @@ func _generate_resources():
 			next_resource_id += 1
 
 func _spawn_default_entities():
-	_create_entity("Stone-1", 0, Vector3(20.0, ground_height(20.0, 20.0) + 6.0, 20.0), Vector3(1.2, 0.0, 0.4), 40.0, 0.45, 0.35, true)
-	_create_entity("Stone-2", 0, Vector3(42.0, ground_height(42.0, 34.0) + 7.0, 34.0), Vector3(-0.8, 0.0, -0.3), 40.0, 0.45, 0.35, true)
-	var x = float(width - 1) * 0.5
-	var z = float(depth - 1) * 0.5
-	human_test_actor_id = _create_entity("HumanTester", 3, Vector3(x, ground_height(x, z) + 0.35, z), Vector3.ZERO, 70.0, 0.35, 0.0, false)
+	var spawn = find_human_spawn()
+	human_test_actor_id = _create_entity("HumanTester", 3, spawn, Vector3.ZERO, 70.0, 0.35, 0.0, false)
+	var stone_x = clamp(float(width) * 0.28, 1.0, float(width - 2))
+	var stone_z = clamp(float(depth) * 0.32, 1.0, float(depth - 2))
+	var stone_y = ground_height(stone_x, stone_z) + 1.5
+	_create_entity("Stone-1", 0, Vector3(stone_x, stone_y, stone_z), Vector3.ZERO, 40.0, 0.45, 0.05, true)
+
+func find_human_spawn():
+	var cx = float(width - 1) * 0.5
+	var cz = float(depth - 1) * 0.5
+	var max_radius = max(width, depth)
+	for radius in range(0, max_radius):
+		var samples = max(8, radius * 8)
+		for i in range(samples):
+			var angle = float(i) / float(samples) * PI * 2.0
+			var x = clamp(cx + cos(angle) * float(radius), 1.0, float(width - 2))
+			var z = clamp(cz + sin(angle) * float(radius), 1.0, float(depth - 2))
+			var h = ground_height(x, z)
+			if h > sea_level + 0.8 and surface_slope(x, z) < 0.55:
+				return Vector3(x, h + 0.35, z)
+	return Vector3(cx, ground_height(cx, cz) + 0.35, cz)
+
+func surface_slope(x, z):
+	if heights.empty():
+		return 0.0
+	var qx = clamp(float(x), 0.0, float(width - 1))
+	var qz = clamp(float(z), 0.0, float(depth - 1))
+	var left = ground_height(qx - 1.0, qz)
+	var right = ground_height(qx + 1.0, qz)
+	var back = ground_height(qx, qz - 1.0)
+	var front = ground_height(qx, qz + 1.0)
+	var dx = (right - left) * 0.5
+	var dz = (front - back) * 0.5
+	return clamp(sqrt(dx * dx + dz * dz) / max(0.001, sqrt(1.0 + dx * dx + dz * dz)), 0.0, 1.0)
+
+func humidity_at(x, z):
+	if humidity.empty():
+		return 0.45
+	var ix = clamp(int(round(float(x))), 0, width - 1)
+	var iz = clamp(int(round(float(z))), 0, depth - 1)
+	return float(humidity[iz * width + ix])
+
+func is_water_at(x, z):
+	if heights.empty():
+		return false
+	return ground_height(x, z) < sea_level - 0.02
+
+func get_water_state_for_player(position):
+	if not is_water_at(position.x, position.z):
+		return false
+	return position.y < sea_level + 1.15
 
 func _create_entity(name, material, position, velocity, mass, radius, restitution, dynamic):
 	var entity = {
@@ -226,9 +277,7 @@ func set_human_test_pose(position):
 	return true
 
 func reset_human_test_actor():
-	var x = float(width - 1) * 0.5
-	var z = float(depth - 1) * 0.5
-	return set_human_test_pose(Vector3(x, ground_height(x, z) + 0.35, z))
+	return set_human_test_pose(find_human_spawn())
 
 func apply_action(action, source = "agent"):
 	var result = {"accepted": false, "amount": 0.0, "reason": "unsupported_action"}
@@ -318,20 +367,34 @@ func step():
 
 func _step_environment(dt):
 	environment_accumulator += dt
-	if environment_accumulator < 0.5:
+	if environment_accumulator < 0.25:
 		return
 	var elapsed = environment_accumulator
 	environment_accumulator = 0.0
-	var day_fraction = fmod(max(0.0, seconds), 86400.0) / 86400.0
-	sunlight = max(0.0, sin(day_fraction * PI * 2.0 - PI * 0.5))
-	global_temperature = 286.0 + 3.0 * sunlight
-	var blend = clamp(elapsed / 120.0, 0.0, 1.0)
+	var day_fraction = solar_day_fraction()
+	var sun_value = sin((day_fraction - 0.25) * PI * 2.0)
+	sunlight = clamp(max(0.0, sun_value), 0.0, 1.0)
+	global_temperature = 283.5 + 6.5 * sunlight
+	var blend = clamp(elapsed / 60.0, 0.0, 1.0)
 	for z in range(depth):
 		for x in range(width):
 			var idx = z * width + x
 			var target = global_temperature + 4.0 * sin(float(x) * 0.04) + cos(float(z) * 0.025)
 			temperatures[idx] = lerp(float(temperatures[idx]), target, blend)
 	world_revision += 1
+
+func solar_day_fraction():
+	return fmod(max(0.0, seconds), DAY_LENGTH_SECONDS) / DAY_LENGTH_SECONDS
+
+func solar_phase_name():
+	var fraction = solar_day_fraction()
+	if fraction < 0.20 or fraction >= 0.80:
+		return "Night"
+	if fraction < 0.28:
+		return "Dawn"
+	if fraction < 0.70:
+		return "Day"
+	return "Dusk"
 
 func _step_physics(dt):
 	var max_substep = 1.0 / 120.0
@@ -389,7 +452,8 @@ func resource_kind_name(kind):
 	return "unknown"
 
 func calendar():
-	var total = int(clamp(floor(max(0.0, seconds)), 0.0, 9223372036854775807.0))
+	var world_seconds = max(0.0, seconds) / DAY_LENGTH_SECONDS * 86400.0
+	var total = int(clamp(floor(world_seconds), 0.0, 9223372036854775807.0))
 	var second = total % 60
 	var minute_total = int(total / 60)
 	var minute = minute_total % 60
@@ -742,6 +806,32 @@ func run_self_tests():
 	var event_backup = event_log.duplicate(true)
 	var checks = []
 	_test(checks, "world dimensions", heights.size() == width * depth)
+	var min_height = 999999.0
+	var max_height = -999999.0
+	var has_water = false
+	for value in heights:
+		min_height = min(min_height, float(value))
+		max_height = max(max_height, float(value))
+	for value in water_depths:
+		if float(value) > 0.02:
+			has_water = true
+			break
+	_test(checks, "terrain has meaningful relief", max_height - min_height > 5.0)
+	_test(checks, "water exists below sea level", has_water)
+	var spawn_test = find_human_spawn()
+	_test(checks, "HumanTester spawn is safe", spawn_test.y > ground_height(spawn_test.x, spawn_test.z) and not is_water_at(spawn_test.x, spawn_test.z))
+	var saved_seconds_for_cycle = seconds
+	seconds = DAY_LENGTH_SECONDS * 0.50
+	environment_accumulator = 0.25
+	_step_environment(0.0)
+	var noon_light = sunlight
+	seconds = 0.0
+	environment_accumulator = 0.25
+	_step_environment(0.0)
+	var midnight_light = sunlight
+	_test(checks, "solar cycle has real contrast", noon_light > 0.95 and midnight_light < 0.05)
+	seconds = saved_seconds_for_cycle
+	_step_environment(0.0)
 	_test(checks, "resource IDs unique", _ids_unique(resources))
 	_test(checks, "entity IDs unique", _ids_unique(entities))
 	var mirror = get_script().new()
