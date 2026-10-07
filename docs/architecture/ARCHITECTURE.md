@@ -1,6 +1,6 @@
 # Origin Architecture
 
-## Active runtime (0.7.2-dev)
+## Active runtime (0.8.0-dev)
 
 Origin is a **Godot 3.6-only application**. The runtime, simulation, rendering, human tester, persistence and developer/test tools live in one process.
 

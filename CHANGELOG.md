@@ -1,13 +1,24 @@
 # Changelog
 
-## 0.7.2-dev
+## 0.8.0-dev
+
+- Reworked the terrain renderer around corrected surface normals; the previous x/z derivative swap could produce the white/striped lighting artifact visible in the reported screenshots.
+- Removed the terrain normal-map dependency from the active GLES2 terrain path; geometric normals are now authoritative for stable lighting.
+- Added dedicated 512x512 sand, terrain, rock, bark, foliage, soil, and water material assets and integrated them through reusable Godot 3 `SpatialMaterial` resources.
+- Added separate terrain surface materials for shore sand and steep/high cliff areas, reducing the previous single-material washed-out landscape.
+- Increased ground texture tiling so terrain detail reads at gameplay scale instead of looking stretched across the whole world.
+- Reduced direct/ambient light balance and removed depth fog/exposure adjustments that could wash out the foreground on low-end GLES2 hardware.
+- Tuned opaque water to a darker, lower-specular material with deterministic UV motion for a clearer water surface.
+- Reworked procedural terrain generation to use coherent multi-scale value noise rather than per-cell salt-and-pepper height variation.
+- Improved player horizontal movement with acceleration/deceleration and widened stable floor-angle handling.
+- Hardened the Godot test launcher so it cannot accidentally execute Godot 4.
 
 - Fixed the Godot 3.x parser failure caused by using `seed` as an in-memory member variable name; the serialized save key remains `seed`.
 - Fixed the cascading `Main.gd` preload error by loading the runtime and player scripts at startup instead of compile-time preloading them.
 - Added a visible startup error panel so script-load failures cannot degrade into an unexplained grey screen.
 - Made the headless Godot self-test report a clear runtime-script load failure instead of a secondary preload error.
 - Fixed the event log bound so `MAX_EVENT_LOG` is actually respected.
-- Rebuilt the active 0.7.1 client from the last confirmed-working 0.6.2 Godot path instead of carrying forward the experimental 0.7.0 rendering/physics layer.
+- Rebuilt the active 0.8.0 client from the last confirmed-working 0.6.2 Godot path instead of carrying forward the experimental 0.7.0 rendering/physics layer.
 - Removed the experimental custom sky shader, shader parameters, and GLES3 renderer change from the active runtime.
 - Added deterministic multi-scale terrain, safe HumanTester spawn selection, and a real 10-minute solar cycle.
 - Added terrain relief, water-presence, spawn-safety, and solar-contrast regression checks.

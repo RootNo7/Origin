@@ -1,6 +1,6 @@
 extends Reference
 
-# Origin 0.7.2-dev stable runtime
+# Origin 0.8.0-dev graphics + stable runtime
 # The runtime is authoritative for the playable Godot build.
 # The previous native backend is historical only; the active project contains no native runtime dependency.
 
@@ -16,7 +16,7 @@ const DEFAULT_DEPTH = 96
 const DEFAULT_SEED = 7
 const DEFAULT_DT = 1.0 / 30.0
 const DAY_LENGTH_SECONDS = 600.0
-const START_DAY_FRACTION = 0.30
+const START_DAY_FRACTION = 0.45
 const MIN_DT = 0.000001
 const MAX_DT = 0.25
 const MAX_SPEED = 16.0
@@ -28,7 +28,7 @@ const MAX_ACCUMULATOR = 1.0
 var width = DEFAULT_WIDTH
 var depth = DEFAULT_DEPTH
 var world_seed = DEFAULT_SEED
-var sea_level = 8.0
+var sea_level = 7.2
 var heights = []
 var temperatures = []
 var water_depths = []
@@ -57,7 +57,7 @@ func initialize(p_seed = DEFAULT_SEED, p_width = DEFAULT_WIDTH, p_depth = DEFAUL
 	width = clamp(int(p_width), 8, MAX_DIMENSION)
 	depth = clamp(int(p_depth), 8, MAX_DIMENSION)
 	world_seed = int(p_seed)
-	sea_level = 8.0
+	sea_level = 7.2
 	heights = []
 	temperatures = []
 	water_depths = []
@@ -93,30 +93,45 @@ func _generate_world():
 	temperatures.resize(cell_count)
 	water_depths.resize(cell_count)
 	humidity.resize(cell_count)
-	var cx = float(width - 1) * 0.5
-	var cz = float(depth - 1) * 0.5
-	var scale = max(16.0, float(max(width, depth)))
 	for z in range(depth):
 		for x in range(width):
-			var fx = float(x)
-			var fz = float(z)
-			var nx = (fx - cx) / scale
-			var nz = (fz - cz) / scale
-			var continent = sin(nx * PI * 1.8) * 2.6 + cos(nz * PI * 1.55) * 2.15 + sin((nx - nz) * PI * 3.6) * 1.15
-			var hills = sin(fx * 0.072 + fz * 0.041) * 1.35 + cos(fx * 0.043 - fz * 0.091) * 0.95
-			var detail = (_hash01(x, z) - 0.5) * 0.65
-			var h = clamp(8.1 + continent + hills + detail, 1.0, 28.0)
-			var latitude = (fz / max(1.0, float(depth - 1))) * PI
-			var t = 287.0 - 5.0 * cos(latitude) + 1.5 * sin(fx * 0.035 + fz * 0.02)
+			var continent = (_value_noise(float(x), float(z), 48.0, 17, 31) - 0.5) * 8.0
+			var regional = (_value_noise(float(x), float(z), 20.0, 73, -19) - 0.5) * 4.5
+			var ridge_noise = _value_noise(float(x), float(z), 11.0, 123, 55)
+			var ridges = pow(1.0 - abs(ridge_noise * 2.0 - 1.0), 2.0) * 3.5
+			var peak_factor = max(0.0, (ridge_noise - 0.58) / 0.42)
+			var mountain_peaks = pow(peak_factor, 2.2) * 5.0
+			var broad_waves = sin(float(x) * 0.065 + float(z) * 0.035) * 0.55 + cos(float(x) * 0.032 - float(z) * 0.071) * 0.45
+			var h = clamp(5.7 + continent + regional + ridges + mountain_peaks + broad_waves, 2.0, 22.0)
+			var latitude = (float(z) / max(1.0, float(depth - 1))) * PI
+			var t = 287.0 - 5.0 * cos(latitude) + 1.0 * sin(float(x) * 0.025 + float(z) * 0.017)
 			var idx = z * width + x
 			heights[idx] = h
 			temperatures[idx] = t
 			water_depths[idx] = max(0.0, sea_level - h)
-			var coastal = clamp(water_depths[idx] / 4.0, 0.0, 1.0)
-			humidity[idx] = clamp(0.45 + coastal * 0.36 + (_hash01(x + 73, z - 31) - 0.5) * 0.10, 0.05, 0.98)
+			var coastal = clamp(water_depths[idx] / 3.5, 0.0, 1.0)
+			humidity[idx] = clamp(0.43 + coastal * 0.40 + (_value_noise(float(x), float(z), 15.0, 211, 9) - 0.5) * 0.12, 0.05, 0.98)
 	terrain_revision = 1
 	world_revision = 1
 	_generate_resources()
+
+func _value_noise(x, z, scale_value, offset_x, offset_z):
+	var scale = max(0.001, float(scale_value))
+	var gx = x / scale
+	var gz = z / scale
+	var x0 = int(floor(gx))
+	var z0 = int(floor(gz))
+	var tx = gx - float(x0)
+	var tz = gz - float(z0)
+	tx = tx * tx * (3.0 - 2.0 * tx)
+	tz = tz * tz * (3.0 - 2.0 * tz)
+	var n00 = _hash01(x0 + offset_x, z0 + offset_z)
+	var n10 = _hash01(x0 + 1 + offset_x, z0 + offset_z)
+	var n01 = _hash01(x0 + offset_x, z0 + 1 + offset_z)
+	var n11 = _hash01(x0 + 1 + offset_x, z0 + 1 + offset_z)
+	var nx0 = lerp(n00, n10, tx)
+	var nx1 = lerp(n01, n11, tx)
+	return lerp(nx0, nx1, tz)
 
 func _hash01(x, z):
 	var n = int(world_seed) * 374761393 + int(x) * 668265263 + int(z) * 2147483647

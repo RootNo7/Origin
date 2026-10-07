@@ -40,14 +40,31 @@ func _physics_process(delta):
 	if direction.length_squared() > 0.0:
 		direction = direction.normalized()
 
-	velocity.x = direction.x * move_speed
-	velocity.z = direction.z * move_speed
-	velocity.y -= gravity * delta
+	var target_horizontal = direction * move_speed
+	var horizontal_blend = clamp(delta * 12.0, 0.0, 1.0)
+	velocity.x = lerp(velocity.x, target_horizontal.x, horizontal_blend)
+	velocity.z = lerp(velocity.z, target_horizontal.z, horizontal_blend)
 
-	if Input.is_key_pressed(KEY_SPACE) and is_on_floor():
-		velocity.y = jump_speed
+	var in_water = false
+	var parent = get_parent()
+	if parent != null and parent.has_method("is_player_in_water"):
+		in_water = parent.is_player_in_water(global_transform.origin)
 
-	velocity = move_and_slide(velocity, Vector3.UP, false, 4, deg2rad(45.0), false)
+	if in_water:
+		var target_vertical = -0.8
+		if Input.is_key_pressed(KEY_SPACE):
+			target_vertical = 3.8
+		elif Input.is_key_pressed(KEY_SHIFT):
+			target_vertical = -3.0
+		velocity.y = lerp(velocity.y, target_vertical, clamp(delta * 5.0, 0.0, 1.0))
+		velocity.x = lerp(velocity.x, direction.x * move_speed * 0.70, clamp(delta * 6.0, 0.0, 1.0))
+		velocity.z = lerp(velocity.z, direction.z * move_speed * 0.70, clamp(delta * 6.0, 0.0, 1.0))
+	else:
+		velocity.y -= gravity * delta
+		if Input.is_key_pressed(KEY_SPACE) and is_on_floor():
+			velocity.y = jump_speed
+
+	velocity = move_and_slide(velocity, Vector3.UP, false, 4, deg2rad(52.0), false)
 
 func deg2rad(value):
 	return value * PI / 180.0

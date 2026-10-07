@@ -13,7 +13,7 @@ SCRIPT_ROOT = ROOT / "observer" / "godot"
 FORBIDDEN = (
     "Node3D", "CharacterBody3D", "RigidBody3D", "@onready", "@export",
     "extends Node3D", "extends CharacterBody3D", "extends RigidBody3D",
-    "shader_type", "ShaderMaterial", "OpenSimplexNoise",
+    "shader_type", "ShaderMaterial", "OpenSimplexNoise", "ProceduralSkyMaterial", "StandardMaterial3D",
 )
 
 def read_scripts():
@@ -64,6 +64,32 @@ def main():
     scene=(ROOT/'observer/godot/scenes/Main.tscn').read_text(encoding='utf-8')
     if 'res://observer/godot/scripts/Main.gd' not in scene:
         failures.append('Main.tscn: Main.gd reference missing')
+    asset_root = ROOT / "observer" / "godot" / "assets" / "textures"
+    required_assets = (
+        "terrain_albedo.png", "terrain_normal.png",
+        "rock_albedo.png", "rock_normal.png",
+        "wood_albedo.png", "wood_normal.png",
+        "leaf_albedo.png",
+        "soil_albedo.png", "soil_normal.png",
+        "sand_albedo.png", "sand_normal.png",
+        "water_albedo.png", "water_normal.png",
+        "sky_gradient.png",
+    )
+    for asset in required_assets:
+        target = asset_root / asset
+        if not target.exists() or target.stat().st_size < 1024:
+            failures.append(f"texture asset missing/empty: {target}")
+
+    main_script = (SCRIPT_ROOT / "scripts" / "Main.gd").read_text(encoding="utf-8")
+    for asset in ("terrain_albedo.png", "sand_albedo.png", "water_albedo.png", "rock_albedo.png", "wood_albedo.png", "leaf_albedo.png", "soil_albedo.png"):
+        if asset not in main_script:
+            failures.append(f"Main.gd: texture asset not referenced: {asset}")
+    if 'Vector3(-dz, 1.0, -dx)' not in main_script:
+        failures.append('Main.gd: terrain normal calculation is not the corrected x/z derivative form')
+    if 'normal_enabled = true' in main_script.split('func _rebuild_terrain():', 1)[1].split('func _create_water_surface():', 1)[0]:
+        failures.append('Main.gd: terrain renderer must not enable a normal map on the stable GLES2 terrain path')
+    if 'flags_transparent = true' in main_script.split('func _create_water_surface():', 1)[1].split('func _texture(', 1)[0]:
+        failures.append('Main.gd: water must stay opaque on the stable GLES2 path')
     if failures:
         print('ORIGIN STATIC VALIDATION: FAIL')
         for item in failures:
