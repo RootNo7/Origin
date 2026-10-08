@@ -1,8 +1,8 @@
-# Origin 0.8.0-dev
+# Origin 0.8.1-dev
 
 Origin is a persistent virtual-world research environment. It is not primarily a conventional open-world game. The long-term target is a systemic environment that humans can test and LLM agents can eventually inhabit through controlled perception/action interfaces.
 
-## 0.8.0-dev: single-application runtime + startup hardening
+## 0.8.1-dev: single-application runtime + startup hardening
 
 The active Origin runtime is now **Godot 3.6-only**.
 
@@ -95,15 +95,8 @@ Implemented:
 Future milestones can now build directly on the Godot runtime without maintaining a second executable.
 
 
-## 0.8.0-dev stability note
+## 0.8.1-dev stability note
 
 This release is a regression recovery build based on the last confirmed-working 0.6.2 runtime. It keeps the Godot 3.6/GLES2 execution path, removes experimental shader-dependent presentation, and reintroduces only deterministic terrain/time changes.
 
 Actual Godot graphical F5 execution must still be performed with Godot 3.6 on the target machine; the repository includes static compatibility checks and in-Godot self-tests for runtime verification.
-
-
-## 0.8.0-dev graphics pass
-
-This milestone introduces the first authored texture/material layer without leaving the Godot 3.6-only runtime: terrain, sand, rock, bark, leaves, soil, and water textures; normal maps for secondary materials where the mesh path supports them; deterministic trees and rocks; a procedural Godot 3 sky; conservative lighting; and opaque water rendering to avoid GLES2 transparency/sorting artifacts.
-
-The release intentionally avoids custom shaders and third-party runtime dependencies.

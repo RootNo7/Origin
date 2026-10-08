@@ -1,6 +1,7 @@
 extends Reference
 
-# Origin 0.8.0-dev graphics + stable runtime
+# Origin 0.8.1-dev stable Godot 3.6 runtime
+
 # The runtime is authoritative for the playable Godot build.
 # The previous native backend is historical only; the active project contains no native runtime dependency.
 
@@ -11,12 +12,15 @@ const MAX_DIMENSION = 512
 const MAX_SAVE_BYTES = 128 * 1024 * 1024
 const INVENTORY_CAPACITY_PER_KIND = 1000.0
 const MAX_EVENT_LOG = 512
+const MAX_SAVE_CELLS = MAX_DIMENSION * MAX_DIMENSION
+const MAX_RESOURCES = 20000
+const MAX_ENTITIES = 4096
 const DEFAULT_WIDTH = 96
 const DEFAULT_DEPTH = 96
 const DEFAULT_SEED = 7
 const DEFAULT_DT = 1.0 / 30.0
 const DAY_LENGTH_SECONDS = 600.0
-const START_DAY_FRACTION = 0.45
+const START_DAY_FRACTION = 0.30
 const MIN_DT = 0.000001
 const MAX_DT = 0.25
 const MAX_SPEED = 16.0
@@ -28,7 +32,7 @@ const MAX_ACCUMULATOR = 1.0
 var width = DEFAULT_WIDTH
 var depth = DEFAULT_DEPTH
 var world_seed = DEFAULT_SEED
-var sea_level = 7.2
+var sea_level = 8.0
 var heights = []
 var temperatures = []
 var water_depths = []
@@ -57,7 +61,7 @@ func initialize(p_seed = DEFAULT_SEED, p_width = DEFAULT_WIDTH, p_depth = DEFAUL
 	width = clamp(int(p_width), 8, MAX_DIMENSION)
 	depth = clamp(int(p_depth), 8, MAX_DIMENSION)
 	world_seed = int(p_seed)
-	sea_level = 7.2
+	sea_level = 8.0
 	heights = []
 	temperatures = []
 	water_depths = []
@@ -93,45 +97,30 @@ func _generate_world():
 	temperatures.resize(cell_count)
 	water_depths.resize(cell_count)
 	humidity.resize(cell_count)
+	var cx = float(width - 1) * 0.5
+	var cz = float(depth - 1) * 0.5
+	var scale = max(16.0, float(max(width, depth)))
 	for z in range(depth):
 		for x in range(width):
-			var continent = (_value_noise(float(x), float(z), 48.0, 17, 31) - 0.5) * 8.0
-			var regional = (_value_noise(float(x), float(z), 20.0, 73, -19) - 0.5) * 4.5
-			var ridge_noise = _value_noise(float(x), float(z), 11.0, 123, 55)
-			var ridges = pow(1.0 - abs(ridge_noise * 2.0 - 1.0), 2.0) * 3.5
-			var peak_factor = max(0.0, (ridge_noise - 0.58) / 0.42)
-			var mountain_peaks = pow(peak_factor, 2.2) * 5.0
-			var broad_waves = sin(float(x) * 0.065 + float(z) * 0.035) * 0.55 + cos(float(x) * 0.032 - float(z) * 0.071) * 0.45
-			var h = clamp(5.7 + continent + regional + ridges + mountain_peaks + broad_waves, 2.0, 22.0)
-			var latitude = (float(z) / max(1.0, float(depth - 1))) * PI
-			var t = 287.0 - 5.0 * cos(latitude) + 1.0 * sin(float(x) * 0.025 + float(z) * 0.017)
+			var fx = float(x)
+			var fz = float(z)
+			var nx = (fx - cx) / scale
+			var nz = (fz - cz) / scale
+			var continent = sin(nx * PI * 1.8) * 2.6 + cos(nz * PI * 1.55) * 2.15 + sin((nx - nz) * PI * 3.6) * 1.15
+			var hills = sin(fx * 0.072 + fz * 0.041) * 1.35 + cos(fx * 0.043 - fz * 0.091) * 0.95
+			var detail = (_hash01(x, z) - 0.5) * 0.65
+			var h = clamp(8.1 + continent + hills + detail, 1.0, 28.0)
+			var latitude = (fz / max(1.0, float(depth - 1))) * PI
+			var t = 287.0 - 5.0 * cos(latitude) + 1.5 * sin(fx * 0.035 + fz * 0.02)
 			var idx = z * width + x
 			heights[idx] = h
 			temperatures[idx] = t
 			water_depths[idx] = max(0.0, sea_level - h)
-			var coastal = clamp(water_depths[idx] / 3.5, 0.0, 1.0)
-			humidity[idx] = clamp(0.43 + coastal * 0.40 + (_value_noise(float(x), float(z), 15.0, 211, 9) - 0.5) * 0.12, 0.05, 0.98)
+			var coastal = clamp(water_depths[idx] / 4.0, 0.0, 1.0)
+			humidity[idx] = clamp(0.45 + coastal * 0.36 + (_hash01(x + 73, z - 31) - 0.5) * 0.10, 0.05, 0.98)
 	terrain_revision = 1
 	world_revision = 1
 	_generate_resources()
-
-func _value_noise(x, z, scale_value, offset_x, offset_z):
-	var scale = max(0.001, float(scale_value))
-	var gx = x / scale
-	var gz = z / scale
-	var x0 = int(floor(gx))
-	var z0 = int(floor(gz))
-	var tx = gx - float(x0)
-	var tz = gz - float(z0)
-	tx = tx * tx * (3.0 - 2.0 * tx)
-	tz = tz * tz * (3.0 - 2.0 * tz)
-	var n00 = _hash01(x0 + offset_x, z0 + offset_z)
-	var n10 = _hash01(x0 + 1 + offset_x, z0 + offset_z)
-	var n01 = _hash01(x0 + offset_x, z0 + 1 + offset_z)
-	var n11 = _hash01(x0 + 1 + offset_x, z0 + 1 + offset_z)
-	var nx0 = lerp(n00, n10, tx)
-	var nx1 = lerp(n01, n11, tx)
-	return lerp(nx0, nx1, tz)
 
 func _hash01(x, z):
 	var n = int(world_seed) * 374761393 + int(x) * 668265263 + int(z) * 2147483647
@@ -576,6 +565,8 @@ func import_legacy_save(path):
 		var key = parts[0]
 		if key == "cells" and parts.size() >= 2:
 			incoming["cell_count"] = int(parts[1])
+			if incoming["cell_count"] <= 0 or incoming["cell_count"] > MAX_SAVE_CELLS:
+				return false
 			incoming["cells"] = []
 			i += 1
 			for _c in range(incoming["cell_count"]):
@@ -589,6 +580,8 @@ func import_legacy_save(path):
 			incoming["resources"] = []
 			incoming["next_resource_id"] = int(parts[2])
 			var count = int(parts[1])
+			if count < 0 or count > MAX_RESOURCES:
+				return false
 			i += 1
 			for _r in range(count):
 				if i >= lines.size(): return false
@@ -600,6 +593,8 @@ func import_legacy_save(path):
 		if key == "entities" and parts.size() >= 2:
 			incoming["entities"] = []
 			var count_e = int(parts[1])
+			if count_e < 0 or count_e > MAX_ENTITIES:
+				return false
 			i += 1
 			for _e in range(count_e):
 				if i >= lines.size(): return false
@@ -692,94 +687,146 @@ func _serialize():
 	}
 
 func _apply_serialized(data):
-	if typeof(data) != TYPE_DICTIONARY or typeof(data.get("world", null)) != TYPE_DICTIONARY or typeof(data.get("clock", null)) != TYPE_DICTIONARY or typeof(data.get("environment", null)) != TYPE_DICTIONARY:
+	if typeof(data) != TYPE_DICTIONARY:
+		return false
+	var incoming_world = data.get("world", null)
+	var incoming_clock = data.get("clock", null)
+	var incoming_environment = data.get("environment", null)
+	if typeof(incoming_world) != TYPE_DICTIONARY or typeof(incoming_clock) != TYPE_DICTIONARY or typeof(incoming_environment) != TYPE_DICTIONARY:
 		return false
 	var data_format = int(data.get("format", 0))
 	if data_format != SAVE_FORMAT and data_format != PREVIOUS_SAVE_FORMAT:
 		return false
-	var candidate_width = int(data.get("world", {}).get("width", 0))
-	var candidate_depth = int(data.get("world", {}).get("depth", 0))
+
+	var candidate_width = int(incoming_world.get("width", 0))
+	var candidate_depth = int(incoming_world.get("depth", 0))
 	if candidate_width < 8 or candidate_depth < 8 or candidate_width > MAX_DIMENSION or candidate_depth > MAX_DIMENSION:
 		return false
-	var w = data.get("world", {})
-	var hs = w.get("heights", [])
-	var ts = w.get("temperatures", [])
-	var ws = w.get("water_depths", [])
-	var hum = w.get("humidity", [])
+	var candidate_cell_count = candidate_width * candidate_depth
+	if candidate_cell_count <= 0 or candidate_cell_count > MAX_SAVE_CELLS:
+		return false
+
+	var hs = incoming_world.get("heights", [])
+	var ts = incoming_world.get("temperatures", [])
+	var ws = incoming_world.get("water_depths", [])
+	var hum = incoming_world.get("humidity", [])
 	if typeof(hs) != TYPE_ARRAY or typeof(ts) != TYPE_ARRAY or typeof(ws) != TYPE_ARRAY or typeof(hum) != TYPE_ARRAY:
 		return false
-	var candidate_cell_count = candidate_width * candidate_depth
 	if hs.size() != candidate_cell_count or ts.size() != candidate_cell_count or ws.size() != candidate_cell_count or hum.size() != candidate_cell_count:
 		return false
-	var candidate_sea_level = float(w.get("sea_level", sea_level))
-	if not _finite(candidate_sea_level) or abs(candidate_sea_level) > 100000.0: return false
-	if int(w.get("next_resource_id", 0)) <= 0: return false
-	if int(w.get("world_revision", 0)) < 0 or int(w.get("persistent_revision", 0)) < 0 or int(w.get("terrain_revision", 0)) < 0: return false
-	if hs.size() > 16777216: return false
+
+	var candidate_sea_level = float(incoming_world.get("sea_level", sea_level))
+	var candidate_world_revision = int(incoming_world.get("world_revision", 0))
+	var candidate_persistent_revision = int(incoming_world.get("persistent_revision", candidate_world_revision))
+	var candidate_terrain_revision = int(incoming_world.get("terrain_revision", 1))
+	var candidate_next_resource_id = int(incoming_world.get("next_resource_id", 0))
+	if not _finite(candidate_sea_level) or abs(candidate_sea_level) > 100000.0:
+		return false
+	if candidate_world_revision < 0 or candidate_persistent_revision < 0 or candidate_terrain_revision < 0 or candidate_next_resource_id <= 0:
+		return false
+
 	for value in hs:
-		if not _finite(float(value)): return false
+		if not _finite(float(value)):
+			return false
 	for value in ts:
-		if not _finite(float(value)): return false
+		if not _finite(float(value)):
+			return false
 	for value in ws:
-		if not _finite(float(value)) or float(value) < 0.0: return false
+		if not _finite(float(value)) or float(value) < 0.0:
+			return false
 	for value in hum:
-		if not _finite(float(value)) or float(value) < 0.0 or float(value) > 1.0: return false
+		if not _finite(float(value)) or float(value) < 0.0 or float(value) > 1.0:
+			return false
+
 	var new_resources = data.get("resources", [])
-	if typeof(new_resources) != TYPE_ARRAY or new_resources.size() > 100000:
+	if typeof(new_resources) != TYPE_ARRAY or new_resources.size() > MAX_RESOURCES:
 		return false
 	var resource_ids = {}
+	var max_resource_id = 0
 	for resource in new_resources:
 		if typeof(resource) != TYPE_DICTIONARY:
 			return false
 		if not _has_keys(resource, ["id", "kind", "x", "y", "z", "remaining", "max"]):
 			return false
-		if int(resource.get("id", 0)) <= 0 or resource_ids.has(int(resource.id)) or not _finite_resource(resource):
+		var resource_id = int(resource.get("id", 0))
+		if resource_id <= 0 or resource_ids.has(resource_id) or not _finite_resource(resource):
 			return false
-		resource_ids[int(resource.id)] = true
-		if int(resource.kind) < 0 or int(resource.kind) > 3: return false
-		if float(resource.x) < 0.0 or float(resource.z) < 0.0 or float(resource.x) > float(candidate_width - 1) or float(resource.z) > float(candidate_depth - 1): return false
-		if float(resource.max) <= 0.0 or abs(float(resource.y)) > 1000000.0 or int(resource.kind) < 0 or int(resource.kind) > 3: return false
-	var max_resource_id = 0
-	for resource in new_resources:
-		max_resource_id = max(max_resource_id, int(resource.id))
-	if int(w.get("next_resource_id", 0)) <= max_resource_id: return false
+		var resource_kind = int(resource.get("kind", -1))
+		var resource_x = float(resource.get("x", 0.0))
+		var resource_y = float(resource.get("y", 0.0))
+		var resource_z = float(resource.get("z", 0.0))
+		var resource_remaining = float(resource.get("remaining", 0.0))
+		var resource_max = float(resource.get("max", 0.0))
+		if resource_kind < 0 or resource_kind > 3:
+			return false
+		if resource_x < 0.0 or resource_z < 0.0 or resource_x > float(candidate_width - 1) or resource_z > float(candidate_depth - 1):
+			return false
+		if resource_max <= 0.0 or resource_remaining < 0.0 or resource_remaining > resource_max or not _finite(resource_y) or abs(resource_y) > 1000000.0:
+			return false
+		resource_ids[resource_id] = true
+		max_resource_id = max(max_resource_id, resource_id)
+	if candidate_next_resource_id <= max_resource_id:
+		return false
+
 	var new_entities = data.get("entities", [])
-	if typeof(new_entities) != TYPE_ARRAY or new_entities.size() > 100000: return false
+	if typeof(new_entities) != TYPE_ARRAY or new_entities.size() > MAX_ENTITIES:
+		return false
 	var entity_ids = {}
 	var found_human = false
 	var human_count = 0
+	var max_entity_id = 0
+	var candidate_human_id = int(data.get("human_test_actor_id", 0))
+	if candidate_human_id <= 0:
+		return false
 	for entity in new_entities:
 		if typeof(entity) != TYPE_DICTIONARY:
 			return false
 		if not _has_keys(entity, ["id", "name", "material", "alive", "dynamic", "x", "y", "z", "vx", "vy", "vz", "mass", "radius", "restitution", "inventory"]):
 			return false
-		if int(entity.get("id", 0)) <= 0 or entity_ids.has(int(entity.id)) or not _finite_entity(entity):
+		var entity_id = int(entity.get("id", 0))
+		if entity_id <= 0 or entity_ids.has(entity_id) or not _finite_entity(entity):
 			return false
-		entity_ids[int(entity.id)] = true
-		var inv = entity.get("inventory", {})
-		if typeof(inv) != TYPE_DICTIONARY:
+		var entity_material = int(entity.get("material", -1))
+		if entity_material < 0 or entity_material > 3:
+			return false
+		var inventory = entity.get("inventory", {})
+		if typeof(inventory) != TYPE_DICTIONARY:
 			return false
 		for kind in [0, 1, 2, 3]:
-			var inventory_value = float(inv.get(str(kind), 0.0))
-			if not _finite(inventory_value) or inventory_value < 0.0 or inventory_value > INVENTORY_CAPACITY_PER_KIND: return false
-		if float(entity.x) < 0.0 or float(entity.z) < 0.0 or float(entity.x) > float(candidate_width - 1) or float(entity.z) > float(candidate_depth - 1): return false
-		if abs(float(entity.y)) > 1000000.0 or float(entity.mass) <= 0.0 or float(entity.radius) <= 0.0 or float(entity.restitution) < 0.0 or float(entity.restitution) > 1.0: return false
+			var inventory_value = float(inventory.get(str(kind), 0.0))
+			if not _finite(inventory_value) or inventory_value < 0.0 or inventory_value > INVENTORY_CAPACITY_PER_KIND:
+				return false
+		var entity_x = float(entity.get("x", 0.0))
+		var entity_y = float(entity.get("y", 0.0))
+		var entity_z = float(entity.get("z", 0.0))
+		var entity_mass = float(entity.get("mass", 0.0))
+		var entity_radius = float(entity.get("radius", 0.0))
+		var entity_restitution = float(entity.get("restitution", 0.0))
+		if entity_x < 0.0 or entity_z < 0.0 or entity_x > float(candidate_width - 1) or entity_z > float(candidate_depth - 1):
+			return false
+		if abs(entity_y) > 1000000.0 or entity_mass <= 0.0 or entity_radius <= 0.0 or entity_restitution < 0.0 or entity_restitution > 1.0:
+			return false
+		entity_ids[entity_id] = true
+		max_entity_id = max(max_entity_id, entity_id)
 		if str(entity.get("name", "")) == "HumanTester":
 			human_count += 1
-			if int(entity.id) == int(data.get("human_test_actor_id", 0)):
+			if entity_id == candidate_human_id:
 				found_human = true
-	if not found_human or human_count != 1:
+	if new_entities.empty() or max_entity_id >= 9223372036854775806 or not found_human or human_count != 1:
 		return false
-	if int(data.get("human_test_actor_id", 0)) <= 0:
-		return false
-	var s = data.get("clock", {})
-	var candidate_tick = int(s.get("tick", 0))
-	var candidate_seconds = float(s.get("seconds", 0.0))
-	var candidate_dt = float(s.get("dt", DEFAULT_DT))
-	var candidate_speed = float(s.get("speed", 1.0))
+
+	var candidate_tick = int(incoming_clock.get("tick", 0))
+	var candidate_seconds = float(incoming_clock.get("seconds", 0.0))
+	var candidate_dt = float(incoming_clock.get("dt", DEFAULT_DT))
+	var candidate_speed = float(incoming_clock.get("speed", 1.0))
 	if candidate_tick < 0 or not _finite(candidate_seconds) or candidate_seconds < 0.0 or not _finite(candidate_dt) or candidate_dt <= 0.0 or not _finite(candidate_speed) or candidate_speed < 0.0:
 		return false
-	# Commit only after the entire candidate state passes validation.
+	var candidate_sunlight = float(incoming_environment.get("sunlight", 1.0))
+	var candidate_temperature = float(incoming_environment.get("temperature", 288.15))
+	if not _finite(candidate_sunlight) or candidate_sunlight < 0.0 or candidate_sunlight > 1.0 or not _finite(candidate_temperature):
+		return false
+
+	# Commit only after the complete candidate has passed validation.
 	width = candidate_width
 	depth = candidate_depth
 	heights = hs.duplicate()
@@ -788,28 +835,19 @@ func _apply_serialized(data):
 	humidity = hum.duplicate()
 	resources = new_resources.duplicate(true)
 	entities = new_entities.duplicate(true)
-	world_seed = int(w.get("seed", world_seed))
+	world_seed = int(incoming_world.get("seed", world_seed))
 	sea_level = candidate_sea_level
-	world_revision = int(w.get("world_revision", 0))
-	persistent_revision = int(w.get("persistent_revision", world_revision))
-	terrain_revision = int(w.get("terrain_revision", 1))
-	next_resource_id = int(w.get("next_resource_id", 1))
-	var max_entity_id = 0
-	for entity in entities:
-		max_entity_id = max(max_entity_id, int(entity.id))
-	if max_entity_id >= 9223372036854775806:
-		return false
+	world_revision = candidate_world_revision
+	persistent_revision = candidate_persistent_revision
+	terrain_revision = candidate_terrain_revision
+	next_resource_id = candidate_next_resource_id
 	next_entity_id = max_entity_id + 1
-	human_test_actor_id = int(data.get("human_test_actor_id", 0))
+	human_test_actor_id = candidate_human_id
 	tick = candidate_tick
 	seconds = candidate_seconds
 	fixed_dt = clamp(candidate_dt, MIN_DT, MAX_DT)
-	set_speed(candidate_speed)
-	paused = bool(s.get("paused", false))
-	var candidate_sunlight = float(data.get("environment", {}).get("sunlight", 1.0))
-	var candidate_temperature = float(data.get("environment", {}).get("temperature", 288.15))
-	if not _finite(candidate_sunlight) or candidate_sunlight < 0.0 or candidate_sunlight > 1.0 or not _finite(candidate_temperature):
-		return false
+	speed = clamp(candidate_speed, 0.0, MAX_SPEED)
+	paused = bool(incoming_clock.get("paused", false))
 	sunlight = candidate_sunlight
 	global_temperature = candidate_temperature
 	accumulator = 0.0

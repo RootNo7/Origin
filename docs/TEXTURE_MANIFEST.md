@@ -1,6 +1,6 @@
-# Origin 0.8.0-dev Texture Manifest
+# Origin 0.8.1-dev Texture Manifest
 
-The 0.8.0 graphics pass uses original in-project assets generated and processed for Origin. No external texture or model download is required.
+The 0.8.1 graphics pass uses original in-project assets generated and processed for Origin. No external texture or model download is required.
 
 ## Visible material set
 

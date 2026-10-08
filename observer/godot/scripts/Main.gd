@@ -28,21 +28,15 @@ var pending_gather = false
 var world_environment_node = null
 var sun_node = null
 var startup_failed = false
-var decoration_root = null
 var texture_cache = {}
-var water_update_timer = 0.0
-var water_material_node = null
-var sky_node = null
-var sky_update_timer = 0.0
 var terrain_material_node = null
-var sand_material_node = null
-var cliff_material_node = null
 var shared_rock_material = null
 var shared_wood_material = null
-var shared_leaf_material = null
 var shared_soil_material = null
 
 func _ready():
+	if not _validate_texture_set():
+		return
 	var runtime_script = load(RUNTIME_PATH)
 	if runtime_script == null:
 		_show_startup_error("OriginRuntime.gd could not be loaded", "The simulation script has a parse/compile error. Check the first debugger error for OriginRuntime.gd.")
@@ -83,11 +77,10 @@ func _process(delta):
 	if startup_failed or runtime == null:
 		return
 	runtime.advance_frame(delta)
+	if player != null and player.global_transform.origin.y < -25.0:
+		runtime.reset_human_test_actor()
+		_reset_player_if_needed()
 	_sync_environment_visuals()
-	water_update_timer -= delta
-	if water_update_timer <= 0.0:
-		water_update_timer = 0.12
-		_sync_water_visual()
 	autosave_timer -= delta
 	if autosave_timer <= 0.0:
 		autosave_timer = 10.0
@@ -121,31 +114,13 @@ func _create_environment():
 	var world_env = WorldEnvironment.new()
 	world_environment_node = world_env
 	var environment = Environment.new()
-	environment.background_mode = Environment.BG_SKY
+	environment.background_mode = Environment.BG_COLOR
+	environment.background_color = Color(0.10, 0.17, 0.28)
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.42, 0.49, 0.56)
-	environment.ambient_light_energy = 0.18
-	environment.background_energy = 0.58
+	environment.ambient_light_color = Color(0.70, 0.74, 0.80)
+	environment.ambient_light_energy = 0.50
 	environment.fog_enabled = false
 	environment.adjustment_enabled = false
-
-	var sky = ProceduralSky.new()
-	sky.texture_size = ProceduralSky.TEXTURE_SIZE_256
-	sky.sky_top_color = Color(0.055, 0.12, 0.24)
-	sky.sky_horizon_color = Color(0.43, 0.62, 0.78)
-	sky.ground_horizon_color = Color(0.22, 0.20, 0.16)
-	sky.ground_bottom_color = Color(0.045, 0.050, 0.060)
-	sky.sun_color = Color(1.0, 0.74, 0.40)
-	sky.sun_angle_min = 0.75
-	sky.sun_angle_max = 7.5
-	sky.sun_energy = 0.75
-	sky.sun_latitude = 42.0
-	sky.sun_longitude = -90.0
-	sky.sky_energy = 0.75
-	sky.ground_energy = 0.40
-	environment.background_sky = sky
-	sky_node = sky
-
 	world_env.environment = environment
 	add_child(world_env)
 
@@ -154,8 +129,9 @@ func _create_environment():
 	sun_node.shadow_enabled = true
 	sun_node.directional_shadow_max_distance = 120.0
 	sun_node.shadow_bias = 0.10
-	sun_node.light_energy = 0.55
-	sun_node.light_color = Color(1.0, 0.93, 0.82)
+	sun_node.rotation_degrees = Vector3(-35, -35, 0)
+	sun_node.light_energy = 0.90
+	sun_node.light_color = Color(1.0, 0.93, 0.80)
 	add_child(sun_node)
 
 func _sync_environment_visuals():
@@ -165,43 +141,25 @@ func _sync_environment_visuals():
 	var angle = fraction * PI * 2.0
 	var sun_height = sin(angle - PI * 0.5)
 	var daylight = clamp(max(0.0, sun_height), 0.0, 1.0)
-	var twilight = clamp(1.0 - abs(sun_height) / 0.28, 0.0, 1.0)
+	var twilight = clamp(1.0 - abs(sun_height) / 0.25, 0.0, 1.0)
 	if sun_node != null:
-		var altitude = -6.0 + sun_height * 82.0
-		var azimuth = fraction * 360.0 - 90.0
-		sun_node.rotation_degrees = Vector3(-altitude, azimuth, 0.0)
-		sun_node.light_energy = 0.08 + daylight * 0.52 + twilight * 0.06
-		if sun_height < 0.18:
-			sun_node.light_color = Color(1.0, 0.46 + daylight * 0.45, 0.28 + daylight * 0.50)
+		var altitude = -15.0 - daylight * 60.0
+		sun_node.rotation_degrees = Vector3(altitude, fraction * 360.0 - 90.0, 0.0)
+		sun_node.light_energy = 0.035 + daylight * 1.05 + twilight * 0.12
+		if sun_height < 0.12:
+			sun_node.light_color = Color(1.0, 0.58 + daylight * 0.32, 0.40 + daylight * 0.40)
 		else:
-			sun_node.light_color = Color(1.0, 0.94, 0.84)
-	if sky_node != null:
-		sky_update_timer -= get_process_delta_time()
-		if sky_update_timer <= 0.0:
-			sky_update_timer = 0.25
-			sky_node.sun_latitude = -18.0 + daylight * 72.0
-			sky_node.sun_longitude = fraction * 360.0 - 90.0
-			sky_node.sun_energy = 0.02 + daylight * 0.80 + twilight * 0.12
-			sky_node.sky_energy = 0.18 + daylight * 0.70 + twilight * 0.10
-			sky_node.ground_energy = 0.22 + daylight * 0.34
-			if sun_height < -0.18:
-				sky_node.sky_top_color = Color(0.005, 0.008, 0.025)
-				sky_node.sky_horizon_color = Color(0.018, 0.028, 0.070)
-				sky_node.ground_horizon_color = Color(0.018, 0.020, 0.028)
-			elif sun_height < 0.18:
-				var t = clamp((sun_height + 0.18) / 0.36, 0.0, 1.0)
-				sky_node.sky_top_color = Color(0.018 + 0.055 * t, 0.030 + 0.115 * t, 0.060 + 0.20 * t)
-				sky_node.sky_horizon_color = Color(0.08 + 0.28 * t, 0.06 + 0.28 * t, 0.09 + 0.38 * t)
-				sky_node.ground_horizon_color = Color(0.055 + 0.18 * t, 0.050 + 0.16 * t, 0.045 + 0.13 * t)
-			else:
-				sky_node.sky_top_color = Color(0.07, 0.16 + daylight * 0.10, 0.34 + daylight * 0.12)
-				sky_node.sky_horizon_color = Color(0.43 + daylight * 0.08, 0.62 + daylight * 0.12, 0.77 + daylight * 0.10)
-				sky_node.ground_horizon_color = Color(0.24 + daylight * 0.06, 0.22 + daylight * 0.05, 0.18 + daylight * 0.04)
-
+			sun_node.light_color = Color(1.0, 0.93, 0.80)
 	if world_environment_node != null and world_environment_node.environment != null:
-		world_environment_node.environment.ambient_light_energy = 0.065 + daylight * 0.19 + twilight * 0.05
-		world_environment_node.environment.background_energy = 0.26 + daylight * 0.45 + twilight * 0.08
-		world_environment_node.environment.ambient_light_color = Color(0.30 + daylight * 0.14, 0.36 + daylight * 0.15, 0.44 + daylight * 0.17)
+		world_environment_node.environment.ambient_light_energy = 0.08 + daylight * 0.68 + twilight * 0.10
+		world_environment_node.environment.ambient_light_color = Color(0.28 + daylight * 0.40, 0.34 + daylight * 0.38, 0.44 + daylight * 0.34)
+		if sun_height < -0.20:
+			world_environment_node.environment.background_color = Color(0.012, 0.020, 0.055)
+		elif sun_height < 0.15:
+			var twilight_t = clamp((sun_height + 0.20) / 0.35, 0.0, 1.0)
+			world_environment_node.environment.background_color = Color(0.04 + twilight_t * 0.20, 0.035 + twilight_t * 0.20, 0.08 + twilight_t * 0.35)
+		else:
+			world_environment_node.environment.background_color = Color(0.10 + daylight * 0.12, 0.18 + daylight * 0.18, 0.30 + daylight * 0.24)
 
 func _create_hud():
 	var canvas = CanvasLayer.new()
@@ -272,7 +230,7 @@ func _create_dev_panel(canvas):
 func _dev_command(command):
 	match command:
 		"new_world":
-			runtime.initialize(runtime.world_seed)
+			runtime.initialize(runtime.world_seed, runtime.width, runtime.depth)
 			_rebuild_terrain()
 			_reset_player_if_needed()
 			_sync_world_visuals()
@@ -370,18 +328,14 @@ func _rebuild_terrain():
 		terrain_collision.queue_free()
 	if water_node != null and is_instance_valid(water_node):
 		water_node.queue_free()
-	if decoration_root != null and is_instance_valid(decoration_root):
-		decoration_root.queue_free()
-	resource_nodes.clear()
-	entity_nodes.clear()
+	_clear_visual_nodes(resource_nodes)
+	_clear_visual_nodes(entity_nodes)
 
 	var mesh = ArrayMesh.new()
 	var vertices = PoolVector3Array()
 	var normals = PoolVector3Array()
 	var uvs = PoolVector2Array()
-	var terrain_indices = PoolIntArray()
-	var sand_indices = PoolIntArray()
-	var cliff_indices = PoolIntArray()
+	var indices = PoolIntArray()
 	for z in range(runtime.depth):
 		for x in range(runtime.width):
 			var h = float(runtime.heights[z * runtime.width + x])
@@ -390,11 +344,7 @@ func _rebuild_terrain():
 			var right = float(runtime.heights[z * runtime.width + min(runtime.width - 1, x + 1)])
 			var back = float(runtime.heights[max(0, z - 1) * runtime.width + x])
 			var front = float(runtime.heights[min(runtime.depth - 1, z + 1) * runtime.width + x])
-			var dx = (right - left) * 0.5
-			var dz = (front - back) * 0.5
-			# For UVs of (x,z), the correct world-surface normal is (-dz, 1, -dx).
-			# The old renderer swapped dx/dz here, producing the striped/white lighting artifact.
-			normals.append(Vector3(-dz, 1.0, -dx).normalized())
+			normals.append(Vector3(-(right - left) * 0.5, 1.0, -(front - back) * 0.5).normalized())
 			uvs.append(Vector2(float(x) / max(1.0, float(runtime.width - 1)), float(z) / max(1.0, float(runtime.depth - 1))))
 	for z in range(runtime.depth - 1):
 		for x in range(runtime.width - 1):
@@ -402,25 +352,24 @@ func _rebuild_terrain():
 			var b = a + runtime.width
 			var c = a + 1
 			var d = b + 1
-			var h_avg = (float(runtime.heights[a]) + float(runtime.heights[b]) + float(runtime.heights[c]) + float(runtime.heights[d])) * 0.25
-			var slope_avg = (runtime.surface_slope(float(x), float(z)) + runtime.surface_slope(float(x + 1), float(z + 1))) * 0.5
-			var target = terrain_indices
-			if h_avg < runtime.sea_level + 0.78 and h_avg > runtime.sea_level - 1.75:
-				target = sand_indices
-			elif slope_avg > 0.54 or h_avg > 18.0:
-				target = cliff_indices
-			target.append(a)
-			target.append(b)
-			target.append(c)
-			target.append(c)
-			target.append(b)
-			target.append(d)
+			indices.append(a)
+			indices.append(b)
+			indices.append(c)
+			indices.append(c)
+			indices.append(b)
+			indices.append(d)
 
-	_add_terrain_surface(mesh, vertices, normals, uvs, terrain_indices, _terrain_material())
-	if sand_indices.size() > 0:
-		_add_terrain_surface(mesh, vertices, normals, uvs, sand_indices, _sand_material())
-	if cliff_indices.size() > 0:
-		_add_terrain_surface(mesh, vertices, normals, uvs, cliff_indices, _cliff_material())
+	var arrays = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if mesh.get_surface_count() != 1:
+		push_error("Origin terrain mesh did not create exactly one surface")
+		return false
+	mesh.surface_set_material(0, _terrain_material())
 
 	terrain_mesh = MeshInstance.new()
 	terrain_mesh.name = "Terrain"
@@ -431,96 +380,40 @@ func _rebuild_terrain():
 	if shape != null:
 		var static_body = StaticBody.new()
 		static_body.name = "TerrainCollision"
+		static_body.collision_layer = 1
+		static_body.collision_mask = 1
 		var collision = CollisionShape.new()
 		collision.shape = shape
 		static_body.add_child(collision)
 		add_child(static_body)
 		terrain_collision = static_body
+	else:
+		push_error("Origin terrain collision could not be created")
+		return false
 
-	_create_water_surface()
-	_create_decorations()
-	last_terrain_revision = runtime.terrain_revision
-	return true
-
-func _add_terrain_surface(mesh, vertices, normals, uvs, indices, material):
-	if indices.size() == 0:
-		return
-	var arrays = []
-	arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX] = vertices
-	arrays[Mesh.ARRAY_NORMAL] = normals
-	arrays[Mesh.ARRAY_TEX_UV] = uvs
-	arrays[Mesh.ARRAY_INDEX] = indices
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	mesh.surface_set_material(mesh.get_surface_count() - 1, material)
-
-func _terrain_material():
-	if terrain_material_node != null:
-		return terrain_material_node
-	terrain_material_node = SpatialMaterial.new()
-	terrain_material_node.albedo_color = Color(0.86, 0.94, 0.82)
-	terrain_material_node.albedo_texture = _texture("terrain_albedo.png")
-	terrain_material_node.roughness = 0.94
-	terrain_material_node.metallic = 0.0
-	terrain_material_node.specular = 0.08
-	terrain_material_node.uv1_scale = Vector3(20.0, 20.0, 1.0)
-	return terrain_material_node
-
-func _sand_material():
-	if sand_material_node != null:
-		return sand_material_node
-	sand_material_node = SpatialMaterial.new()
-	sand_material_node.albedo_color = Color(0.92, 0.88, 0.72)
-	sand_material_node.albedo_texture = _texture("sand_albedo.png")
-	sand_material_node.roughness = 0.97
-	sand_material_node.specular = 0.05
-	sand_material_node.uv1_scale = Vector3(16.0, 16.0, 1.0)
-	return sand_material_node
-
-func _cliff_material():
-	if cliff_material_node != null:
-		return cliff_material_node
-	cliff_material_node = SpatialMaterial.new()
-	cliff_material_node.albedo_color = Color(0.82, 0.82, 0.80)
-	cliff_material_node.albedo_texture = _texture("rock_albedo.png")
-	cliff_material_node.roughness = 0.96
-	cliff_material_node.specular = 0.06
-	cliff_material_node.uv1_scale = Vector3(11.0, 11.0, 1.0)
-	return cliff_material_node
-
-func _create_water_surface():
 	var water_mesh = PlaneMesh.new()
 	water_mesh.size = Vector2(runtime.width - 1, runtime.depth - 1)
-	water_material_node = _water_material()
-	water_mesh.material = water_material_node
+	water_mesh.subdivide_width = 16
+	water_mesh.subdivide_depth = 16
+	water_mesh.material = _water_material()
 	water_node = MeshInstance.new()
 	water_node.name = "Water"
 	water_node.mesh = water_mesh
 	water_node.translation = Vector3((runtime.width - 1) * 0.5, runtime.sea_level, (runtime.depth - 1) * 0.5)
 	add_child(water_node)
+	last_terrain_revision = runtime.terrain_revision
+	return true
 
-func _sync_water_visual():
-	if water_node == null or not is_instance_valid(water_node):
-		return
-	var t = fmod(runtime.seconds * 0.75, PI * 2.0)
-	water_node.translation.y = runtime.sea_level + sin(t) * 0.018
-	if water_material_node != null:
-		var fraction = runtime.solar_day_fraction()
-		var sun_height = sin(fraction * PI * 2.0 - PI * 0.5)
-		var daylight = clamp(max(0.0, sun_height), 0.0, 1.0)
-		water_material_node.albedo_color = Color(0.34 + daylight * 0.22, 0.58 + daylight * 0.24, 0.64 + daylight * 0.26)
-		var uv_phase = fmod(runtime.seconds * 0.010, 1.0)
-		water_material_node.uv1_offset = Vector3(uv_phase, fmod(runtime.seconds * 0.006, 1.0), 0.0)
-
-func _water_material():
-	var mat = SpatialMaterial.new()
-	mat.albedo_color = Color(0.48, 0.70, 0.76)
-	mat.albedo_texture = _texture("water_albedo.png")
-	mat.roughness = 0.25
-	mat.metallic = 0.0
-	mat.specular = 0.32
-	mat.uv1_scale = Vector3(14.0, 14.0, 1.0)
-	return mat
+func _terrain_material():
+	if terrain_material_node != null:
+		return terrain_material_node
+	terrain_material_node = SpatialMaterial.new()
+	terrain_material_node.albedo_texture = _texture("terrain_albedo.png")
+	terrain_material_node.albedo_color = Color(0.72, 0.84, 0.68)
+	terrain_material_node.roughness = 0.96
+	terrain_material_node.specular = 0.06
+	terrain_material_node.uv1_scale = Vector3(18.0, 18.0, 1.0)
+	return terrain_material_node
 
 func _texture(file_name):
 	if texture_cache.has(file_name):
@@ -532,110 +425,24 @@ func _texture(file_name):
 	texture_cache[file_name] = texture
 	return texture
 
-func _create_decorations():
-	decoration_root = Spatial.new()
-	decoration_root.name = "Decorations"
-	add_child(decoration_root)
-	var step = 6
-	for z in range(3, runtime.depth - 3, step):
-		for x in range(3, runtime.width - 3, step):
-			var h = runtime.ground_height(float(x), float(z))
-			if h <= runtime.sea_level + 0.9:
-				continue
-			if runtime.surface_slope(float(x), float(z)) > 0.48:
-				continue
-			var chance = _visual_hash(x, z)
-			if chance > 0.62:
-				_add_tree(Vector3(float(x), h, float(z)), 0.85 + _visual_hash(x + 11, z + 7) * 0.45)
-			elif chance > 0.52:
-				_add_small_rock(Vector3(float(x), h, float(z)), 0.6 + _visual_hash(x - 9, z + 3) * 0.7)
+func _validate_texture_set():
+	var required = ["terrain_albedo.png", "sand_albedo.png", "rock_albedo.png", "wood_albedo.png", "leaf_albedo.png", "soil_albedo.png", "water_albedo.png"]
+	for file_name in required:
+		var path = "res://observer/godot/assets/textures/" + file_name
+		if load(path) == null:
+			_show_startup_error("Texture asset missing", path + " could not be loaded by Godot 3.6.")
+			return false
+	return true
 
-func _visual_hash(x, z):
-	var value = sin(float(x) * 12.9898 + float(z) * 78.233 + float(runtime.world_seed) * 37.719) * 43758.5453
-	return abs(value - floor(value))
-
-func _add_tree(position, scale_value):
-	var root = Spatial.new()
-	root.translation = position
-	root.scale = Vector3.ONE * scale_value
-	var trunk_mesh = CylinderMesh.new()
-	trunk_mesh.top_radius = 0.14
-	trunk_mesh.bottom_radius = 0.22
-	trunk_mesh.height = 2.6
-	trunk_mesh.radial_segments = 8
-	trunk_mesh.rings = 2
-	trunk_mesh.material = _wood_material()
-	var trunk = MeshInstance.new()
-	trunk.mesh = trunk_mesh
-	trunk.translation.y = 1.3
-	root.add_child(trunk)
-	var crown_mesh = SphereMesh.new()
-	crown_mesh.radius = 1.0
-	crown_mesh.height = 1.65
-	crown_mesh.radial_segments = 12
-	crown_mesh.rings = 6
-	crown_mesh.material = _leaf_material()
-	var crown = MeshInstance.new()
-	crown.mesh = crown_mesh
-	crown.scale = Vector3(1.45, 1.05, 1.35)
-	crown.translation = Vector3(0, 2.8, 0)
-	root.add_child(crown)
-	var crown2 = MeshInstance.new()
-	crown2.mesh = crown_mesh
-	crown2.scale = Vector3(1.0, 0.9, 1.0)
-	crown2.translation = Vector3(0.38, 2.15, 0.05)
-	root.add_child(crown2)
-	decoration_root.add_child(root)
-
-func _add_small_rock(position, scale_value):
-	var mesh = SphereMesh.new()
-	mesh.radius = 0.55
-	mesh.height = 0.70
-	mesh.radial_segments = 10
-	mesh.rings = 5
-	mesh.material = _rock_material()
-	var visual = MeshInstance.new()
-	visual.mesh = mesh
-	visual.translation = position + Vector3(0, 0.25, 0)
-	visual.scale = Vector3(scale_value, scale_value * 0.72, scale_value * 0.85)
-	visual.rotation_degrees = Vector3(0, _visual_hash(int(position.x) + 4, int(position.z) + 2) * 360.0, 0)
-	decoration_root.add_child(visual)
-
-func _rock_material():
-	if shared_rock_material != null:
-		return shared_rock_material
-	shared_rock_material = SpatialMaterial.new()
-	shared_rock_material.albedo_color = Color(1.0, 1.0, 1.0)
-	shared_rock_material.albedo_texture = _texture("rock_albedo.png")
-	shared_rock_material.roughness = 0.86
-	shared_rock_material.specular = 0.24
-	shared_rock_material.normal_enabled = true
-	shared_rock_material.normal_texture = _texture("rock_normal.png")
-	shared_rock_material.normal_scale = 0.20
-	return shared_rock_material
-
-func _wood_material():
-	if shared_wood_material != null:
-		return shared_wood_material
-	shared_wood_material = SpatialMaterial.new()
-	shared_wood_material.albedo_color = Color(1.0, 1.0, 1.0)
-	shared_wood_material.albedo_texture = _texture("wood_albedo.png")
-	shared_wood_material.roughness = 0.91
-	shared_wood_material.specular = 0.16
-	shared_wood_material.normal_enabled = true
-	shared_wood_material.normal_texture = _texture("wood_normal.png")
-	shared_wood_material.normal_scale = 0.18
-	return shared_wood_material
-
-func _leaf_material():
-	if shared_leaf_material != null:
-		return shared_leaf_material
-	shared_leaf_material = SpatialMaterial.new()
-	shared_leaf_material.albedo_color = Color(1.0, 1.0, 1.0)
-	shared_leaf_material.albedo_texture = _texture("leaf_albedo.png")
-	shared_leaf_material.roughness = 0.94
-	shared_leaf_material.specular = 0.08
-	return shared_leaf_material
+func _water_material():
+	var mat = SpatialMaterial.new()
+	mat.albedo_texture = _texture("water_albedo.png")
+	mat.albedo_color = Color(0.40, 0.70, 0.78)
+	mat.roughness = 0.28
+	mat.metallic = 0.0
+	mat.specular = 0.18
+	mat.uv1_scale = Vector3(12.0, 12.0, 1.0)
+	return mat
 
 func _create_player():
 	player = KinematicBody.new()
@@ -689,6 +496,9 @@ func _perform_gather_ray():
 	if player == null or runtime.human_test_actor_id <= 0:
 		return
 	var camera = player.get_node("Camera")
+	if camera == null:
+		_console("Camera unavailable.")
+		return
 	var origin = camera.global_transform.origin
 	var direction = -camera.global_transform.basis.z.normalized()
 	var space = get_world().direct_space_state
@@ -706,16 +516,18 @@ func _perform_gather_ray():
 	result_flash_timer = 1.5
 	_console("Gather: %s" % result.reason)
 
-func is_player_in_water(position):
-	if runtime == null:
-		return false
-	return runtime.get_water_state_for_player(position)
-
 func _sync_world_visuals():
 	if last_terrain_revision != runtime.terrain_revision:
 		_rebuild_terrain()
 	_sync_entities()
 	_sync_resources()
+
+func _clear_visual_nodes(dictionary):
+	for id in dictionary.keys():
+		var node = dictionary[id]
+		if node != null and is_instance_valid(node):
+			node.queue_free()
+	dictionary.clear()
 
 func _sync_entities():
 	var seen = {}
@@ -729,7 +541,9 @@ func _sync_entities():
 			var mesh = SphereMesh.new()
 			mesh.radius = max(0.08, float(item.radius))
 			mesh.height = max(0.16, float(item.radius) * 2.0)
-			mesh.material = _rock_material()
+			var mat = SpatialMaterial.new()
+			mat.albedo_color = Color(0.85, 0.68, 0.25)
+			mesh.material = mat
 			visual = MeshInstance.new()
 			visual.name = "Entity-%d" % id
 			visual.mesh = mesh
@@ -757,8 +571,8 @@ func _sync_resources():
 		if visual == null or not is_instance_valid(visual):
 			visual = _create_resource_visual(item)
 			resource_nodes[id] = visual
-		visual.translation = Vector3(item.x, float(item.y), item.z)
-		var ratio = clamp(float(item.remaining) / max(0.001, float(item.max)), 0.22, 1.0)
+		visual.translation = Vector3(float(item.x), float(item.y), float(item.z))
+		var ratio = clamp(float(item.remaining) / max(0.001, float(item.max)), 0.25, 1.0)
 		visual.scale = Vector3.ONE * ratio
 	var stale = []
 	for id in resource_nodes.keys():
@@ -773,74 +587,88 @@ func _create_resource_visual(item):
 	var root = Spatial.new()
 	root.name = "Resource-%d" % int(item.id)
 	var kind = int(item.kind)
-	var visual = MeshInstance.new()
-	var collider = StaticBody.new()
-	collider.name = "ResourceCollider-%d" % int(item.id)
-	collider.set_meta("resource_id", int(item.id))
-	var collision_shape = CollisionShape.new()
+	var mesh_instance = MeshInstance.new()
+	var collider_shape = CollisionShape.new()
+	var body = StaticBody.new()
+	body.name = "ResourceCollider-%d" % int(item.id)
+	body.set_meta("resource_id", int(item.id))
+	body.collision_layer = 2
+	body.collision_mask = 1
 
 	if kind == 0:
-		var mesh = SphereMesh.new()
-		mesh.radius = 0.48
-		mesh.height = 0.72
-		mesh.radial_segments = 12
-		mesh.rings = 6
-		mesh.material = _rock_material()
-		visual.mesh = mesh
-		visual.translation.y = 0.22
+		var rock_mesh = SphereMesh.new()
+		rock_mesh.radius = 0.42
+		rock_mesh.height = 0.70
+		rock_mesh.radial_segments = 10
+		rock_mesh.rings = 5
+		rock_mesh.material = _rock_material()
+		mesh_instance.mesh = rock_mesh
+		mesh_instance.scale = Vector3(1.0, 0.75, 0.90)
 		var sphere = SphereShape.new()
-		sphere.radius = 0.40
-		collision_shape.shape = sphere
-		collision_shape.translation.y = 0.22
+		sphere.radius = 0.42
+		collider_shape.shape = sphere
+		collider_shape.translation = Vector3(0, 0.35, 0)
+		mesh_instance.translation = Vector3(0, 0.35, 0)
 	elif kind == 1:
-		var mesh = CylinderMesh.new()
-		mesh.top_radius = 0.18
-		mesh.bottom_radius = 0.23
-		mesh.height = 0.95
-		mesh.radial_segments = 10
-		mesh.material = _wood_material()
-		visual.mesh = mesh
-		root.rotation_degrees = Vector3(90, 15, 0)
-		visual.translation.y = 0.25
-		var box = BoxShape.new()
-		box.extents = Vector3(0.22, 0.48, 0.22)
-		collision_shape.shape = box
-		collision_shape.translation.y = 0.25
+		var trunk_mesh = CylinderMesh.new()
+		trunk_mesh.top_radius = 0.20
+		trunk_mesh.bottom_radius = 0.28
+		trunk_mesh.height = 1.35
+		trunk_mesh.radial_segments = 8
+		trunk_mesh.material = _wood_material()
+		mesh_instance.mesh = trunk_mesh
+		mesh_instance.translation = Vector3(0, 0.67, 0)
+		var cylinder = CylinderShape.new()
+		cylinder.radius = 0.28
+		cylinder.height = 1.35
+		collider_shape.shape = cylinder
+		collider_shape.translation = Vector3(0, 0.67, 0)
 	else:
-		var mesh = SphereMesh.new()
-		mesh.radius = 0.42
-		mesh.height = 0.55
-		mesh.radial_segments = 10
-		mesh.rings = 5
-		if shared_soil_material == null:
-			shared_soil_material = SpatialMaterial.new()
-			shared_soil_material.albedo_color = Color(1.0, 1.0, 1.0)
-			shared_soil_material.albedo_texture = _texture("soil_albedo.png")
-			shared_soil_material.roughness = 0.96
-			shared_soil_material.normal_enabled = true
-			shared_soil_material.normal_texture = _texture("soil_normal.png")
-			shared_soil_material.normal_scale = 0.20
-		mesh.material = shared_soil_material
-		visual.mesh = mesh
-		visual.translation.y = 0.18
-		var soil_shape = SphereShape.new()
-		soil_shape.radius = 0.34
-		collision_shape.shape = soil_shape
-		collision_shape.translation.y = 0.18
+		var soil_mesh = CubeMesh.new()
+		soil_mesh.size = Vector3(0.70, 0.18, 0.70)
+		soil_mesh.material = _soil_material()
+		mesh_instance.mesh = soil_mesh
+		mesh_instance.translation = Vector3(0, 0.09, 0)
+		var box = BoxShape.new()
+		box.extents = Vector3(0.35, 0.09, 0.35)
+		collider_shape.shape = box
+		collider_shape.translation = Vector3(0, 0.09, 0)
 
-	root.add_child(visual)
-	collider.add_child(collision_shape)
-	root.add_child(collider)
+	body.add_child(collider_shape)
+	root.add_child(mesh_instance)
+	root.add_child(body)
 	add_child(root)
 	return root
 
-func _resource_color(kind):
-	match int(kind):
-		0: return Color(0.46, 0.46, 0.48)
-		1: return Color(0.50, 0.30, 0.12)
-		2: return Color(0.18, 0.42, 0.80)
-		3: return Color(0.55, 0.38, 0.20)
-	return Color(0.8, 0.8, 0.8)
+func _rock_material():
+	if shared_rock_material != null:
+		return shared_rock_material
+	shared_rock_material = SpatialMaterial.new()
+	shared_rock_material.albedo_texture = _texture("rock_albedo.png")
+	shared_rock_material.albedo_color = Color(0.92, 0.92, 0.92)
+	shared_rock_material.roughness = 0.88
+	shared_rock_material.specular = 0.16
+	return shared_rock_material
+
+func _wood_material():
+	if shared_wood_material != null:
+		return shared_wood_material
+	shared_wood_material = SpatialMaterial.new()
+	shared_wood_material.albedo_texture = _texture("wood_albedo.png")
+	shared_wood_material.albedo_color = Color(0.88, 0.76, 0.60)
+	shared_wood_material.roughness = 0.92
+	shared_wood_material.specular = 0.10
+	return shared_wood_material
+
+func _soil_material():
+	if shared_soil_material != null:
+		return shared_soil_material
+	shared_soil_material = SpatialMaterial.new()
+	shared_soil_material.albedo_texture = _texture("soil_albedo.png")
+	shared_soil_material.albedo_color = Color(0.82, 0.70, 0.55)
+	shared_soil_material.roughness = 0.98
+	shared_soil_material.specular = 0.03
+	return shared_soil_material
 
 func _update_hud():
 	if status_label == null:
@@ -853,7 +681,7 @@ func _update_hud():
 	if result_flash_timer > 0.0:
 		focus = "\nLast action: %s" % last_action_text
 	var save_state = "CLEAN" if runtime.persistent_revision == last_saved_persistent_revision else "DIRTY/AUTOSAVE"
-	status_label.text = "ORIGIN 0.8.0 | %s | t=%0.2fs tick=%d  Y=%0.2f\nCalendar Y%d M%d D%d  %02d:%02d:%02d\nTemp %0.1fK  Sun %0.2f  %s  Speed x%0.1f  Save %s\nStone %.1f  Wood %.1f  Water %.1f  Soil %.1f\nWASD move  Space jump  Shift down in water  Left-click gather  F1 console  Esc mouse | FPS %d%s" % [paused_text, runtime.seconds, runtime.tick, player.global_transform.origin.y, cal[0], cal[1] + 1, cal[2] + 1, cal[4], cal[5], cal[6], runtime.global_temperature, runtime.sunlight, phase, runtime.speed, save_state, inv[0], inv[1], inv[2], inv[3], Engine.get_frames_per_second(), focus]
+	status_label.text = "ORIGIN 0.8.1 | %s | t=%0.2fs tick=%d  Y=%0.2f\nCalendar Y%d M%d D%d  %02d:%02d:%02d\nTemp %0.1fK  Sun %0.2f  %s  Speed x%0.1f  Save %s\nStone %.1f  Wood %.1f  Water %.1f  Soil %.1f\nWASD move  Space jump  Left-click gather  F1 console  Esc mouse | FPS %d%s" % [paused_text, runtime.seconds, runtime.tick, player.global_transform.origin.y, cal[0], cal[1] + 1, cal[2] + 1, cal[4], cal[5], cal[6], runtime.global_temperature, runtime.sunlight, phase, runtime.speed, save_state, inv[0], inv[1], inv[2], inv[3], Engine.get_frames_per_second(), focus]
 	crosshair_label.rect_position = get_viewport().size * 0.5 - Vector2(4, 12)
 
 func _show_startup_error(title, message):

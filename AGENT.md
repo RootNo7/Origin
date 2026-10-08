@@ -38,7 +38,7 @@ Act as Origin's lead engineering agent: inspect, implement, test, playtest where
 ## Work loop
 Inspect → smallest correct change → run static/compatibility checks → run Godot tests where practical → playtest → fix errors → optimize → update docs → report exactly what changed and what was verified.
 
-## Current 0.8.0-dev validation targets
+## Current 0.8.1-dev validation targets
 1. The project opens directly in Godot 3.6 with no C++ toolchain.
 2. The Godot runtime generates deterministic 3D terrain.
 3. First-person movement and terrain collision work.
@@ -53,7 +53,7 @@ Inspect → smallest correct change → run static/compatibility checks → run 
 If Godot 3.6 is not installed in the development environment, perform strict Godot 3.x API/static checks and clearly mark live Godot execution as unverified. Do not silently fall back to C++ as the project's runtime.
 
 
-## 0.8.0-dev startup hardening note
+## 0.8.1-dev startup hardening note
 
 - Do not use `seed` as an in-memory GDScript member name; keep `seed` only as a serialized schema key.
 - Do not compile-time `preload` the authoritative runtime from `Main.gd`; load it at startup so a script error does not cascade into a misleading preload error.
